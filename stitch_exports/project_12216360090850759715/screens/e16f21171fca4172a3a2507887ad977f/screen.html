@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-secondary-fixed": "#1a1b1f",
+                    "inverse-primary": "#b12d00",
+                    "secondary": "#c6c6cb",
+                    "on-primary-container": "#541100",
+                    "on-background": "#e5e2e1",
+                    "on-primary-fixed-variant": "#872000",
+                    "on-surface-variant": "#e7bdb2",
+                    "on-secondary-container": "#b5b4ba",
+                    "surface-dim": "#131313",
+                    "primary": "#ffb5a0",
+                    "surface": "#131313",
+                    "surface-bright": "#3a3939",
+                    "on-primary": "#601400",
+                    "on-primary-fixed": "#3b0900",
+                    "on-tertiary": "#2f3131",
+                    "on-secondary": "#2f3034",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-container": "#201f1f",
+                    "on-error": "#690005",
+                    "primary-container": "#ff5625",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-highest": "#353534",
+                    "primary-fixed": "#ffdbd1",
+                    "on-tertiary-container": "#282a2a",
+                    "tertiary-container": "#909191",
+                    "secondary-fixed-dim": "#c6c6cb",
+                    "tertiary-fixed-dim": "#c6c6c7",
+                    "on-tertiary-fixed": "#1a1c1c",
+                    "tertiary-fixed": "#e2e2e2",
+                    "surface-container-lowest": "#0e0e0e",
+                    "outline": "#ad887e",
+                    "error-container": "#93000a",
+                    "outline-variant": "#5d4038",
+                    "on-surface": "#e5e2e1",
+                    "primary-fixed-dim": "#ffb5a0",
+                    "secondary-container": "#46464b",
+                    "background": "#131313",
+                    "inverse-surface": "#e5e2e1",
+                    "on-tertiary-fixed-variant": "#454747",
+                    "tertiary": "#c6c6c7",
+                    "surface-container-high": "#2a2a2a",
+                    "on-secondary-fixed-variant": "#46464b",
+                    "surface-variant": "#353534",
+                    "surface-tint": "#ffb5a0",
+                    "secondary-fixed": "#e3e2e7",
+                    "inverse-on-surface": "#313030",
+                    "error": "#ffb4ab"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "fontFamily": {
+                    "headline": ["Manrope"],
+                    "body": ["Inter"],
+                    "label": ["Inter"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body { background-color: #131313; color: #e5e2e1; }
+      .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="font-body selection:bg-primary-container selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-neutral-900/60 backdrop-blur-2xl">
+<div class="flex justify-between items-center px-8 py-4 max-w-7xl mx-auto">
+<div class="text-xl font-black tracking-tight text-[#e5e2e1] font-headline uppercase">
+                RAMEN MONOLITH
+            </div>
+<div class="hidden md:flex items-center space-x-8">
+<a class="font-headline tracking-tighter font-bold uppercase text-[#e5e2e1] hover:text-[#ff5625] transition-colors hover:scale-105 transition-transform duration-300 ease-out" href="#">Home</a>
+<a class="font-headline tracking-tighter font-bold uppercase text-[#ff5625] border-b-2 border-[#ff5625] pb-1 hover:scale-105 transition-transform duration-300 ease-out" href="#">Menu</a>
+</div>
+<button class="bg-primary-container text-on-primary-fixed px-6 py-2 font-headline font-bold uppercase tracking-widest text-xs hover:scale-105 transition-transform duration-300 ease-out">
+                Login
+            </button>
+</div>
+</nav>
+<main class="pt-32 pb-24 px-6 md:px-12 max-w-7xl mx-auto">
+<!-- Header Section -->
+<header class="mb-20 space-y-4">
+<span class="text-primary-container font-label text-xs tracking-[0.3em] uppercase block">Engineered Umami</span>
+<h1 class="text-6xl md:text-8xl font-headline font-extrabold tracking-tighter uppercase leading-[0.85] mb-8">
+                The <br/>Collection
+            </h1>
+<p class="max-w-xl text-on-surface-variant font-light leading-relaxed text-lg">
+                Our menu is a precise calibration of traditional technique and modern gastronomy. Every bowl is an architectural build of flavor.
+            </p>
+</header>
+<!-- Category: Ramen (Bento Grid Style) -->
+<section class="mb-32">
+<div class="flex items-baseline justify-between mb-12">
+<h2 class="text-4xl font-headline font-bold uppercase tracking-tight">01 / Ramen</h2>
+<span class="font-label text-xs tracking-widest text-on-surface-variant uppercase opacity-50">Signature Bowls</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+<!-- Large Feature Card -->
+<div class="md:col-span-8 group relative overflow-hidden bg-surface-container-low">
+<div class="aspect-[16/9] w-full overflow-hidden">
+<img alt="Signature Tonkotsu" class="w-full h-full object-cover grayscale-[40%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" data-alt="Close-up of premium tonkotsu ramen with creamy broth, soft-boiled egg, and seared pork belly on a dark ceramic background with moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtB1HJmldUjRzMDCYcyFOQiz286YcCkcv70ujKS1DY7idE9q7dHp0kMSPRyxj9WS3Ml6OqVPvo3rG4SU3_FemPlcX73IpWKVAQmflwnBzMOiMjV2Gr6fvxFBWmzbDy2rjYY6JZJFlXohUkBREWgywXZKOxQNoS9B9Nq4nlTEbxg36y3_kgQcJTsbdyYWXvh9Fdvf1zGPSKsAA5FGwcFprKq9WNobfUl4sybFGxd7Dro_BILdyem3MzhIwr9OEzADZO_E3V7VNAYC-T"/>
+</div>
+<div class="p-8 flex flex-col justify-between h-full">
+<div>
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-3xl font-headline font-bold uppercase tracking-tight">The Monolith Tonkotsu</h3>
+<span class="text-primary-container font-headline font-bold text-xl">$24.0</span>
+</div>
+<p class="text-on-surface-variant font-light text-sm max-w-md leading-loose">
+                                48-hour bone marrow reduction, triple-pressed alkaline noodles, house-cured chashu, and a precise 6.5-minute organic egg.
+                            </p>
+</div>
+<div class="mt-8 flex gap-3">
+<span class="bg-surface-container-highest px-3 py-1 text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Signature</span>
+<span class="bg-surface-container-highest px-3 py-1 text-[10px] font-label uppercase tracking-widest text-on-surface-variant">Intense Umami</span>
+</div>
+</div>
+</div>
+<!-- Side Card 1 -->
+<div class="md:col-span-4 group bg-surface-container flex flex-col">
+<div class="aspect-square w-full overflow-hidden">
+<img alt="Spicy Miso" class="w-full h-full object-cover grayscale-[60%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" data-alt="Overhead shot of spicy red miso ramen with chili oil droplets and green scallions in a black bowl against obsidian background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuA3W86iN724lapyqX4zJbwaHwVATapoxcZ3HOBG59260p5Ta_16O5bKnnwAaPs-znZxhvAfqIjpRS769w4lqtQtLp8sOz8dKSTEu85PN7VFIgsbZENv5tqc2KOy-VUlW05pHF8dOAYRtTYCl8pLxNAclKvaUvlg9jiqGT58iz7ufh0AHeyugDtO42JGrZuDZ1a26u1gubiGN5ADuuKfk5bG3gHigQOSkEp7KXv0LNmiTj7fAnv_lPnb35J5OoNDRR0R_av3OLNXfU"/>
+</div>
+<div class="p-6 flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-xl font-headline font-bold uppercase">Thermal Miso</h3>
+<span class="text-primary-container font-headline font-bold">$21.0</span>
+</div>
+<p class="text-on-surface-variant font-light text-xs leading-relaxed">
+                            Fermented chili paste, charred corn, and high-tensile rye noodles. A thermal gradient of heat.
+                        </p>
+</div>
+</div>
+<!-- Side Card 2 -->
+<div class="md:col-span-4 group bg-surface-container flex flex-col">
+<div class="aspect-square w-full overflow-hidden">
+<img alt="Vegan Ramen" class="w-full h-full object-cover grayscale-[60%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" data-alt="Minimalist vegan ramen with clear kombu broth, enoki mushrooms, and tofu on a dark textured table with focused top light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb2S_6f0bOcgNbqzDgrT7zWwtHJbUndO_PjFApeMVe3pzA9DXxKJA7IBQhvDMGoAZuyxz-YjrS2qW4b5z82CtOuyoMtAHETlDDVCYV9myHvazLdi27tm5KnPORmWQsnl6LErAOiFuyoN4LwDQGQFpbFQ_jfP_lVdvn4AnCVa6-cTi5bl3E5JWtiO79eiF1MkaMkxf3_GAgyreA57c7JTQVfO72YGLi-4V-GDXKiIXISgm9-LkyXSi_Njw4045FZkw7fBxkcKuNbK5T"/>
+</div>
+<div class="p-6 flex-grow">
+<div class="flex justify-between items-start mb-2">
+<h3 class="text-xl font-headline font-bold uppercase">Synthetic Clear</h3>
+<span class="text-primary-container font-headline font-bold">$19.0</span>
+</div>
+<p class="text-on-surface-variant font-light text-xs leading-relaxed">
+                            Double-filtered kombu and shiitake broth. Hand-pulled wheat noodles. Minimalist aesthetic.
+                        </p>
+</div>
+</div>
+<!-- Medium Feature Card -->
+<div class="md:col-span-8 group relative overflow-hidden bg-surface-container-low flex flex-col md:flex-row">
+<div class="md:w-1/2 aspect-square md:aspect-auto overflow-hidden">
+<img alt="Black Garlic Ramen" class="w-full h-full object-cover grayscale-[40%] group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105" data-alt="Black garlic ramen with dark ink-like broth and vivid toppings, high contrast photography with deep shadows and sharp highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEHu6ZEpESFBgsXU3pRWksSsEV81igZaWo7WEApYEW8MFIY_8CmgHCfwQ9xUR0oVvjI1h9cd4vBRNesWP17HLHAfTh8I6feegtulkQf2w0seKmZ6bT4OxXTO9t3XZY0m7cqmGlXB9LXj1hxqZRlgU9dMsCQIQoxFe9bkUM_gZWkhtZK86OQZBH2WGNIr1vplpz-m5L9NEuxw4f3-tr_MV8jTevfmaSX-VY7xVMoSUHqTh77VdBmGPcVMP0OVJceVobpaUhe8cdLq3f"/>
+</div>
+<div class="p-8 md:w-1/2 flex flex-col justify-center">
+<div class="mb-4">
+<span class="text-primary-container font-label text-[10px] tracking-[0.2em] uppercase mb-2 block">Experimental</span>
+<div class="flex justify-between items-start mb-4">
+<h3 class="text-2xl font-headline font-bold uppercase tracking-tight">Obsidian Shoyu</h3>
+<span class="text-primary-container font-headline font-bold text-lg">$22.0</span>
+</div>
+<p class="text-on-surface-variant font-light text-sm leading-loose">
+                                Burnt garlic oil infusion with aged soy sauce, duck confit, and bamboo shoots. A deep, dark dive into flavor.
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Category: Small Plates (Sleek Horizontal List) -->
+<section class="mb-32">
+<div class="flex items-baseline justify-between mb-12">
+<h2 class="text-4xl font-headline font-bold uppercase tracking-tight">02 / Small Plates</h2>
+<span class="font-label text-xs tracking-widest text-on-surface-variant uppercase opacity-50">Precision Sides</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-12">
+<div class="group flex items-start space-x-6">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden">
+<img alt="Gyoza" class="w-full h-full object-cover grayscale-[80%] group-hover:grayscale-0 transition-all duration-500" data-alt="Pan-seared gyoza dumplings with perfectly crispy bottoms and delicate steam, on a dark ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7sdYm2tV7OzuamV_uTj594Iy6IHiVNTRApnhMI36SQKzv66rwnHJu4jLGxZg0AP_Qyh_WqhyjknFqLiphhqzEogQ5d2jJYD_pIqs3mj7X25_f8baij0Fx278nJxP_8CNuwbYuHWTMcZ123cX0OuxbXYbJpg8TQ8Nh0OYGjGUQVXjZx51nsxHLHmnbtX-LkovdE2NPxXm9cKFRQxdfITU9_0vaXoir843mxvSUY5s-G3X2swz4ZHNDd1LyJ51rZry0s50AUjrfgbx4"/>
+</div>
+<div>
+<h3 class="text-lg font-headline font-bold uppercase">Seared Gyoza</h3>
+<p class="text-xs text-on-surface-variant font-light mb-2">Pork &amp; Ginger reduction.</p>
+<span class="text-primary-container font-headline font-bold">$9.0</span>
+</div>
+</div>
+<div class="group flex items-start space-x-6">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden">
+<img alt="Karaage" class="w-full h-full object-cover grayscale-[80%] group-hover:grayscale-0 transition-all duration-500" data-alt="Golden fried karaage chicken pieces with yuzu mayo on a dark minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXX4iwrbVYHU1zl6QoPLQu5fEkeCdNp4jGQiV4rqFswLMYzBcRgHaUgFRIunF2YbSewtHc-vpAl9lX9bvtmtcgel-1hyVIG30eUCp50VTFEScZFZlrC8qdwy66ChBKQSArUtan-qIgNBZb9fwpnrOGPVq_v6T5ToUU2iyoapdKMUr7VJpvXGQOmDdQDfQ-DGjByXDYBk20Oix_G0OGmoj--CoNrKoR63-CjJr-RGNax3nRnXpw_ugZ3jFG0SqqDAVb2gaWICMQp6Pl"/>
+</div>
+<div>
+<h3 class="text-lg font-headline font-bold uppercase">Atomic Karaage</h3>
+<p class="text-xs text-on-surface-variant font-light mb-2">Triple-fried, yuzu salt.</p>
+<span class="text-primary-container font-headline font-bold">$12.0</span>
+</div>
+</div>
+<div class="group flex items-start space-x-6">
+<div class="w-24 h-24 flex-shrink-0 bg-surface-container overflow-hidden">
+<img alt="Edamame" class="w-full h-full object-cover grayscale-[80%] group-hover:grayscale-0 transition-all duration-500" data-alt="Fresh green edamame pods with sea salt flakes on a dark volcanic stone plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW1UEgX_NLBAmr9Al5QJjyB2B5cW0NvVMrxjLEK59_fHRJjHHgFIYi8Sw1NvK5AVvPERWsw78YGIAWJ08KpPTd3hxjYPwe0HrSEsVnF1ljBpi0j4Z8-oEsMDiBSoz0Y1oQsUttvbj1Ch67vTubS3rLIwKZYn7jLbt415u08gVRmalE259pZ0dAvI19DC88U9UIr835cU4qo0hTpv_yvx6qtbQrdVHEDEm6evVOi41k1daBEs3zN6hD_Bq7nc0PCJrL2P8UNqW_ifwz"/>
+</div>
+<div>
+<h3 class="text-lg font-headline font-bold uppercase">Smoked Edamame</h3>
+<p class="text-xs text-on-surface-variant font-light mb-2">Charred with truffle salt.</p>
+<span class="text-primary-container font-headline font-bold">$7.0</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Category: Drinks (Glassmorphism Cards) -->
+<section class="mb-32">
+<div class="flex items-baseline justify-between mb-12">
+<h2 class="text-4xl font-headline font-bold uppercase tracking-tight">03 / Liquid</h2>
+<span class="font-label text-xs tracking-widest text-on-surface-variant uppercase opacity-50">Hydration Modules</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+<div class="bg-surface-container-high/40 backdrop-blur-xl p-8 border border-white/5 hover:bg-surface-container-high/60 transition-all">
+<span class="text-[10px] font-label text-primary-container uppercase tracking-widest mb-4 block">Fermented</span>
+<h3 class="text-xl font-headline font-bold uppercase mb-2">Junmai Sake</h3>
+<p class="text-xs text-on-surface-variant font-light leading-relaxed mb-6">Ultra-dry, polished to 50% for crystalline clarity.</p>
+<span class="text-on-surface font-headline font-bold">$16.0</span>
+</div>
+<div class="bg-surface-container-high/40 backdrop-blur-xl p-8 border border-white/5 hover:bg-surface-container-high/60 transition-all">
+<span class="text-[10px] font-label text-primary-container uppercase tracking-widest mb-4 block">Hops</span>
+<h3 class="text-xl font-headline font-bold uppercase mb-2">Asahi Super Dry</h3>
+<p class="text-xs text-on-surface-variant font-light leading-relaxed mb-6">The engineering standard. Cold-filtered, crisp finish.</p>
+<span class="text-on-surface font-headline font-bold">$9.0</span>
+</div>
+<div class="bg-surface-container-high/40 backdrop-blur-xl p-8 border border-white/5 hover:bg-surface-container-high/60 transition-all">
+<span class="text-[10px] font-label text-primary-container uppercase tracking-widest mb-4 block">Botanical</span>
+<h3 class="text-xl font-headline font-bold uppercase mb-2">Yuzu Highball</h3>
+<p class="text-xs text-on-surface-variant font-light leading-relaxed mb-6">Japanese whisky, fresh yuzu, carbonated mineral water.</p>
+<span class="text-on-surface font-headline font-bold">$14.0</span>
+</div>
+<div class="bg-surface-container-high/40 backdrop-blur-xl p-8 border border-white/5 hover:bg-surface-container-high/60 transition-all">
+<span class="text-[10px] font-label text-primary-container uppercase tracking-widest mb-4 block">Static</span>
+<h3 class="text-xl font-headline font-bold uppercase mb-2">Matcha Iced</h3>
+<p class="text-xs text-on-surface-variant font-light leading-relaxed mb-6">Ceremonial grade, cold-whisked to order. Zero sugar.</p>
+<span class="text-on-surface font-headline font-bold">$7.0</span>
+</div>
+</div>
+</section>
+<!-- Chef's Signature Overlay (Special Component) -->
+<section class="relative h-[614px] w-full flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img alt="Chef Signature" class="w-full h-full object-cover opacity-40 grayscale" data-alt="Close-up of chef's hands carefully placing toppings on a bowl of ramen with steam rising in a dark industrial kitchen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-YG-cB0qCtI97SKjFDYhmhY4J9ATGpuhs42dd6PIyjA3wFp-KNtbJZ2a0fXWe76lUS9yQBwpukbM6HCBRPAm9JnWGvSlQ_oILAEyZf6dg14n0mcTY0R7URN8btNLfl6iNU3KyRjRkMzuz6bBVALGJfataCjTA8YrB0eRtmS9FsLyDsHr_VGBJNubPr1k7X8GgPWIcKXWLAzgYo66ZgvhP370tbK-ydJ7LQEWgMWSv35mwmJBgnE8_Zb0O9xoHXVBZRZd-6pFbImwY"/>
+</div>
+<div class="relative z-10 bg-surface-bright/60 backdrop-blur-[40px] p-12 max-w-2xl text-center border border-white/5">
+<span class="text-primary-container font-label text-xs tracking-[0.4em] uppercase mb-4 block">Monthly Calibration</span>
+<h2 class="text-4xl md:text-5xl font-headline font-extrabold tracking-tighter uppercase mb-6 leading-none">The Nebula Lobster Ramen</h2>
+<p class="text-on-surface font-light text-sm mb-8 leading-relaxed opacity-80">
+                    A limited-run experiment featuring butter-poached lobster tail, cognac-infused broth, and saffron noodles. Only 12 bowls prepared per cycle.
+                </p>
+<button class="bg-primary-container text-on-primary-fixed px-10 py-4 font-headline font-bold uppercase tracking-widest text-sm hover:scale-105 transition-transform duration-300">
+                    Inquire Status
+                </button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#0e0e0e] w-full border-t border-[#5d4038]/20">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full max-w-7xl mx-auto">
+<div class="mb-8 md:mb-0">
+<div class="text-lg font-bold text-[#e5e2e1] font-headline tracking-widest mb-2 uppercase">RAMEN MONOLITH</div>
+<p class="text-[#e5e2e1]/60 font-body text-[10px] tracking-widest uppercase">© 2024 RAMEN MONOLITH. PRECISION CRAFTED.</p>
+</div>
+<div class="flex space-x-12">
+<div class="flex flex-col space-y-2">
+<span class="text-[#ff5625] font-headline text-[10px] uppercase tracking-widest font-bold">Connect</span>
+<a class="font-['Inter'] text-xs tracking-[0.1em] uppercase text-[#e5e2e1]/60 hover:text-[#ff5625] transition-all" href="#">Instagram</a>
+<a class="font-['Inter'] text-xs tracking-[0.1em] uppercase text-[#e5e2e1]/60 hover:text-[#ff5625] transition-all" href="#">Twitter / X</a>
+</div>
+<div class="flex flex-col space-y-2">
+<span class="text-[#ff5625] font-headline text-[10px] uppercase tracking-widest font-bold">Logistics</span>
+<a class="font-['Inter'] text-xs tracking-[0.1em] uppercase text-[#e5e2e1]/60 hover:text-[#ff5625] transition-all" href="#">Location</a>
+<a class="font-['Inter'] text-xs tracking-[0.1em] uppercase text-[#e5e2e1]/60 hover:text-[#ff5625] transition-all" href="#">Hours</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

@@ -1,0 +1,116 @@
+{
+  "projectId": "12216360090850759715",
+  "generatedAt": "2026-04-13T19:39:15.252Z",
+  "screens": [
+    {
+      "title": "Login - Ramen Monolith",
+      "name": "projects/12216360090850759715/screens/af672ce8230044e1930ded488acd1983",
+      "screenId": "af672ce8230044e1930ded488acd1983",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/ADBb0uiNQPZZpSyiNqWoDoK4dWgROoqW-JIrTUGr_5yhIK52PCFHbL-Q-HNwRGODZbTIh4dhQ5NSlCyUkABcuWD5zefj-BbFjV9REkpfn8TLfhwSARFiIMRDSlGwX-U7DYsAHfzqNwbrrT7H8qkz1tSVW9Ji-padHkJ6rPrFgOscGQJwoL4jZHn27kcg4tYOOn1x4TPOEbsC6GHfOd9KTr9zI1iUeVQPljszRFHsx--Y-S5hvdq6e5Va3z0hFLeB",
+      "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzhlZDE5N2I1YTVkMjQ0MDFhMTQwM2ZlMmM1MTA1OWVmEgsSBxCh9_H5nRgYAZIBJAoKcHJvamVjdF9pZBIWQhQxMjIxNjM2MDA5MDg1MDc1OTcxNQ&filename=&opi=89354086",
+      "screenshotFileName": "projects/12216360090850759715/files/368529ca2fe148d9ab8fd32b4a7984e7",
+      "htmlFileName": "projects/12216360090850759715/files/525c68a261304695a7852b9d8371a13b"
+    },
+    {
+      "title": "Manage Menu - Admin",
+      "name": "projects/12216360090850759715/screens/826a809eeca24af992cd58bc384242a8",
+      "screenId": "826a809eeca24af992cd58bc384242a8",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/ADBb0ugsctnE8TINbI-u8cxGlU1a15CsfltwU0i7SEa5VTcekBoGTqLn4snUwY-u6FP9zcQA6YiEsOWCGDOYJeBZux-1epHaz7rrNXG64HHRQIBUTRjRjzrULlro7cQOZikwaJFazUi5Lq2MFVYNTzbfIW74PLc8SB6JSuHYZTPEvr18BWy-V9STiFalJ0x1ORjVRfM3ZfgZ39UDvVTzBlDiSeOLwT-T55uU5NaJk5NeyfvhZb7hbKNeuWBNjZM",
+      "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzY2YmQwNTIxMzIwZjQ0MWViNjY4ZDNhODMzNjVhYWViEgsSBxCh9_H5nRgYAZIBJAoKcHJvamVjdF9pZBIWQhQxMjIxNjM2MDA5MDg1MDc1OTcxNQ&filename=&opi=89354086",
+      "screenshotFileName": "projects/12216360090850759715/files/1ff8be6144e248598fc476c82b7bc388",
+      "htmlFileName": "projects/12216360090850759715/files/c11bb878efc243df80aa6fbd9f443a96"
+    },
+    {
+      "title": "Home - Ramen Monolith",
+      "name": "projects/12216360090850759715/screens/f18edadbf1924dbdaeadba151b4d7484",
+      "screenId": "f18edadbf1924dbdaeadba151b4d7484",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/ADBb0ujghViIfxZmjHcEOeD1be8EO3yOFZFeKQpdonLw-bKegmQX2Gf9qWWpYQWDgJwJHn2HpDtIFZGlNYYOvnWIng7S89AmFNpyyvVjOXNRPDySfzxkuWNCCaMo83BBVBCZ3CawcO0INYzOFGkiNvDN076JRWBkPEdW1WtPM_y-6JNlHKaO1pxbjXo_1beMEMzd8SbQcJ_NprUw5qX7dWI8ZblNqqD0YJroAxfwH859rp5vKTnJG1y24c-H3ixA",
+      "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2NhZTlhYTAwMTUyMDQ4NjA5ODRiZTU0NzA3YTM4ZTBjEgsSBxCh9_H5nRgYAZIBJAoKcHJvamVjdF9pZBIWQhQxMjIxNjM2MDA5MDg1MDc1OTcxNQ&filename=&opi=89354086",
+      "screenshotFileName": "projects/12216360090850759715/files/3f1ff8c4aa5747c9b09bf6b75e8ee643",
+      "htmlFileName": "projects/12216360090850759715/files/a3a3c99e3b0e4dae9fa238c6d5d6b56e"
+    },
+    {
+      "title": "Menu - Ramen Monolith",
+      "name": "projects/12216360090850759715/screens/e16f21171fca4172a3a2507887ad977f",
+      "screenId": "e16f21171fca4172a3a2507887ad977f",
+      "screenshotUrl": "https://lh3.googleusercontent.com/aida/ADBb0uh8_9T70llHgIDS2eHC0ejippZLJMK74052Kp7-KDjfJVlyJ4oLtyiT8VAZCkSZXD4V9EJpWmcZ-H0e_0jS7PH2mBKexneULMbGNIFccnSgeoyxtQ2mKVJ0P8klRa1mt8QmBCpuzAkBElEBi86uMhZSYTfkEEua8_6pS7b2jGsry6eDe4lKcl892pAOW3Hzm2d8_2wKNZ9mTUXhtr-VUfSTU7yVfUsOzlEGqO6_PEBf160HOAw6O0nXCSnP",
+      "htmlUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sX2FjMmU0OWQ4ZmY2MDQzNzNiZDIzYTdiMGZmOGEyNzhkEgsSBxCh9_H5nRgYAZIBJAoKcHJvamVjdF9pZBIWQhQxMjIxNjM2MDA5MDg1MDc1OTcxNQ&filename=&opi=89354086",
+      "screenshotFileName": "projects/12216360090850759715/files/ac328d5fe7b64b32b2206881d7ebf688",
+      "htmlFileName": "projects/12216360090850759715/files/98cd356aab124383b3fdbb52c9ffef5d"
+    }
+  ],
+  "designSystems": [
+    {
+      "name": "assets/0ab3d4c2ab394eb581c59b92f9e9fb5a",
+      "version": "1",
+      "designSystem": {
+        "displayName": "Obsidian Umami",
+        "theme": {
+          "colorMode": "DARK",
+          "font": "MANROPE",
+          "roundness": "ROUND_FOUR",
+          "customColor": "#FF4500",
+          "headlineFont": "MANROPE",
+          "bodyFont": "INTER",
+          "labelFont": "INTER",
+          "namedColors": {
+            "background": "#131313",
+            "error": "#ffb4ab",
+            "error_container": "#93000a",
+            "inverse_on_surface": "#313030",
+            "inverse_primary": "#b12d00",
+            "inverse_surface": "#e5e2e1",
+            "on_background": "#e5e2e1",
+            "on_error": "#690005",
+            "on_error_container": "#ffdad6",
+            "on_primary": "#601400",
+            "on_primary_container": "#541100",
+            "on_primary_fixed": "#3b0900",
+            "on_primary_fixed_variant": "#872000",
+            "on_secondary": "#2f3034",
+            "on_secondary_container": "#b5b4ba",
+            "on_secondary_fixed": "#1a1b1f",
+            "on_secondary_fixed_variant": "#46464b",
+            "on_surface": "#e5e2e1",
+            "on_surface_variant": "#e7bdb2",
+            "on_tertiary": "#2f3131",
+            "on_tertiary_container": "#282a2a",
+            "on_tertiary_fixed": "#1a1c1c",
+            "on_tertiary_fixed_variant": "#454747",
+            "outline": "#ad887e",
+            "outline_variant": "#5d4038",
+            "primary": "#ffb5a0",
+            "primary_container": "#ff5625",
+            "primary_fixed": "#ffdbd1",
+            "primary_fixed_dim": "#ffb5a0",
+            "secondary": "#c6c6cb",
+            "secondary_container": "#46464b",
+            "secondary_fixed": "#e3e2e7",
+            "secondary_fixed_dim": "#c6c6cb",
+            "surface": "#131313",
+            "surface_bright": "#3a3939",
+            "surface_container": "#201f1f",
+            "surface_container_high": "#2a2a2a",
+            "surface_container_highest": "#353534",
+            "surface_container_low": "#1c1b1b",
+            "surface_container_lowest": "#0e0e0e",
+            "surface_dim": "#131313",
+            "surface_tint": "#ffb5a0",
+            "surface_variant": "#353534",
+            "tertiary": "#c6c6c7",
+            "tertiary_container": "#909191",
+            "tertiary_fixed": "#e2e2e2",
+            "tertiary_fixed_dim": "#c6c6c7"
+          },
+          "designMd": "# Design System Document: High-End Culinary Noir\n\n## 1. Overview & Creative North Star\n**Creative North Star: \"The Culinary Monolith\"**\n\nThis design system is an exercise in atmospheric precision. It rejects the cluttered, \"template-heavy\" layouts of traditional dining websites in favor of a cinematic, editorial experience. We are fusing the technical rigor of aerospace engineering (SpaceX) with the effortless grace of premium lifestyle technology (Apple). \n\nThe goal is to treat every page like a high-end magazine spread. We achieve this through **Intentional Asymmetry**, where large-scale typography creates a rhythmic tension against \"The Void\" (the deep obsidian background). By utilizing extreme high-contrast photography and subtle, glass-like layering, we ensure the product—the ramen—feels like a piece of precision-engineered art.\n\n---\n\n## 2. Colors\nOur palette is rooted in the darkness of an obsidian bowl, punctuated by the visceral heat of \"Ramen Orange.\"\n\n*   **Primary Accent (`primary_container`: #ff5625):** This is the soul of the brand. Use this vibrant orange sparingly for critical calls to action (CTAs) and moments of \"heat\" (e.g., price points or active states).\n*   **The Obsidian Base (`background`: #131313):** The foundation. It should feel bottomless, providing the perfect canvas for high-contrast food photography.\n\n### The \"No-Line\" Rule\n**Explicit Instruction:** Designers are prohibited from using 1px solid borders to section off content. Sectioning must be achieved through:\n1.  **Tonal Shifts:** Placing a `surface_container_low` (#1c1b1b) section against the `surface` (#131313) background.\n2.  **Generous Whitespace:** Using the spacing scale to create mental boundaries without visual clutter.\n\n### Surface Hierarchy & Nesting\nTreat the UI as a physical stack of materials. \n*   **Base:** `surface_container_lowest` (#0e0e0e) for the deepest \"recessed\" areas.\n*   **Main Floor:** `surface` (#131313).\n*   **Elevated Content:** `surface_container` (#201f1f) or `surface_container_high` (#2a2a2a) for interactive modules.\n\n### The \"Glass & Gradient\" Rule\nTo mimic futuristic metallic and ceramic textures, use **Glassmorphism** for floating elements (e.g., navigation bars or overlays). Use a background blur of `20px` to `40px` combined with a semi-transparent `surface_bright` (#3a3939). For primary buttons, apply a subtle linear gradient from `primary` (#ffb5a0) to `primary_container` (#ff5625) at a 135-degree angle to provide a \"glowing ember\" effect.\n\n---\n\n## 3. Typography\nWe utilize a dual-typeface system to balance technical precision with editorial authority.\n\n*   **Display & Headlines (Manrope):** These must be used with tight letter-spacing (-2%) and bold weights. Use `display-lg` (3.5rem) for hero statements to command attention.\n*   **Body & Labels (Inter):** For utilitarian information, Inter provides the \"Apple-esque\" clarity required. \n*   **Hierarchy Tip:** Pair a `display-sm` headline with `label-md` in all-caps (tracked out +10%) for a technical, sophisticated metadata look.\n\n---\n\n## 4. Elevation & Depth\nDepth in this system is atmospheric, not structural.\n\n*   **The Layering Principle:** Instead of shadows, use \"Tonal Layering.\" A card using `surface_container_highest` (#353534) sitting on `surface_container_low` (#1c1b1b) creates an immediate sense of lift through luminosity rather than drop-shadows.\n*   **Ambient Shadows:** If a shadow is required for a floating modal, use the color `surface_container_lowest` (#0e0e0e) with a 60px blur and 40% opacity. This mimics natural light dissipation in a dark room.\n*   **The \"Ghost Border\" Fallback:** For input fields or secondary containers, use the `outline_variant` (#5d4038) at **20% opacity**. This creates a \"barely-there\" guide that feels premium and intentional.\n\n---\n\n## 5. Components\n\n### Buttons\n*   **Primary:** Roundedness `sm` (0.125rem). Background is the orange gradient (`primary` to `primary_container`). Label is `on_primary_fixed` (#3b0900) for high contrast.\n*   **Secondary:** Ghost style. No background. Border is \"Ghost Border\" (20% opacity `outline_variant`). \n*   **Interaction:** On hover, primary buttons should scale slightly (1.02x) with a `300ms` ease-out transition.\n\n### Cards & Menu Items\n*   **Rule:** No dividers. Separate menu items using vertical space and background shifts.\n*   **Structure:** Use `surface_container` for the card body. Image should be full-bleed with a `0.25rem` (DEFAULT) rounded corner.\n*   **Typography:** Item name in `title-lg`, price in `primary_container` using `title-md`.\n\n### Chips (Dietary Tags/Categories)\n*   **Style:** Minimalist capsules using `surface_container_highest` (#353534). \n*   **Typography:** `label-sm` in `on_surface_variant`. No borders.\n\n### Input Fields\n*   **Visuals:** Bottom-border only or \"Ghost Border.\" Background should be `surface_container_low`. \n*   **Focus State:** The bottom border transitions to `primary_container` with a subtle outer glow (4px blur).\n\n### Specialized Component: The \"Chef’s Signature\" Overlay\nA floating, semi-transparent module using `surface_bright` at 60% opacity with a heavy backdrop blur. Used for limited-time ramen specials, featuring `display-sm` typography.\n\n---\n\n## 6. Do's and Don'ts\n\n### Do:\n*   **Use High-Contrast Imagery:** Photography should feature dark backgrounds with brightly lit, steaming food.\n*   **Embrace The Void:** Allow for massive amounts of `background` space between sections to evoke a sense of luxury.\n*   **Asymmetric Layouts:** Place a headline on the left and a supporting body paragraph shifted significantly to the right to break the \"grid\" feel.\n\n### Don't:\n*   **Don't use 100% white text:** Use `on_surface` (#e5e2e1) for body text to reduce eye strain on the dark background.\n*   **No Standard Shadows:** Never use a default #000000 25% opacity shadow. It looks \"web-native\" and cheap.\n*   **No Dividers:** If you feel the need to add a line, add 40px of whitespace instead.\n*   **Avoid High Roundedness:** Stick to `sm` (0.125rem) or `none` for a more architectural, aggressive look. Reserved `full` only for circular action chips.",
+          "colorVariant": "FIDELITY",
+          "overridePrimaryColor": "#FF4500",
+          "overrideSecondaryColor": "#8E8E93",
+          "overrideTertiaryColor": "#FFFFFF",
+          "overrideNeutralColor": "#080808",
+          "spacingScale": 3
+        }
+      }
+    }
+  ]
+}
