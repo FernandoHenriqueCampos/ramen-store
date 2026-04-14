@@ -1,13 +1,14 @@
 ﻿<script setup lang="ts">
+import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
-import { logoutAdmin } from '@/services/adminAuth'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 
 const router = useRouter()
+const store = useStore()
 
 function exitAdmin() {
-  logoutAdmin()
-  router.push('/')
+  store.dispatch('adminAuth/logout')
+  router.push('/login')
 }
 </script>
 <template>
@@ -349,7 +350,6 @@ function exitAdmin() {
   background: #ff5625;
 }
 </style>
-
 
 
 

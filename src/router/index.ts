@@ -4,7 +4,7 @@ import HomeView from '@/views/HomeView.vue'
 import MenuView from '@/views/MenuView.vue'
 import LoginView from '@/views/LoginView.vue'
 import AdminView from '@/views/AdminView.vue'
-import { isAdminAuthenticated } from '@/services/adminAuth'
+import store from '@/store'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -20,9 +20,16 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  if (to.path === '/admin' && !isAdminAuthenticated()) {
+  const isAdminAuthenticated = store.getters['adminAuth/isAuthenticated'] as boolean
+
+  if (to.path === '/admin' && !isAdminAuthenticated) {
     return { path: '/login', query: { redirect: '/admin' } }
   }
+
+  if (to.path === '/login' && isAdminAuthenticated) {
+    return { path: '/admin' }
+  }
+
   return true
 })
 
