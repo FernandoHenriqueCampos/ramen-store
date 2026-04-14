@@ -1,28 +1,32 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useStore } from 'vuex'
 
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } from '@/data/userMenuItems'
+import type { RootState } from '@/store'
 
 const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
-const CART_STORAGE_KEY = 'ramen_cart_items'
 const categories: Array<CatalogCategory | 'All'> = ['All', 'Ramen', 'Drinks', 'Sides']
+const store = useStore<RootState>()
 
 const searchTerm = ref('')
 const selectedCategory = ref<CatalogCategory | 'All'>('All')
 const menuItems = ref<UserCatalogItem[]>(defaultUserCatalogItems)
 const selectedItem = ref<UserCatalogItem | null>(null)
 const selectedQuantity = ref(1)
-const cartMessage = ref('')
 
-type CartItem = {
-  id: string
-  name: string
-  price: string
-  category: CatalogCategory
-  image: string
-  quantity: number
+type AlertType = 'success' | 'error' | 'info'
+type UiAlert = {
+  id: number
+  type: AlertType
+  title: string
+  message: string
 }
+
+const alerts = ref<UiAlert[]>([])
+let alertId = 0
+const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
 
 const puzzlePattern = [
   'md:col-span-6 lg:col-span-4',
@@ -62,29 +66,6 @@ function parseUserItems(raw: string | null): UserCatalogItem[] | null {
   }
 }
 
-function parseCartItems(raw: string | null): CartItem[] {
-  if (!raw) return []
-
-  try {
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-
-    return parsed.filter((item): item is CartItem => {
-      return (
-        typeof item?.id === 'string' &&
-        typeof item?.name === 'string' &&
-        typeof item?.price === 'string' &&
-        typeof item?.image === 'string' &&
-        typeof item?.quantity === 'number' &&
-        item.quantity > 0 &&
-        isValidCategory(item?.category)
-      )
-    })
-  } catch {
-    return []
-  }
-}
-
 function parsePriceToNumber(price: string): number {
   const normalized = price.replace(/[^0-9.]/g, '')
   const parsed = Number.parseFloat(normalized)
@@ -98,7 +79,6 @@ function formatMoney(value: number): string {
 function openItemModal(item: UserCatalogItem): void {
   selectedItem.value = item
   selectedQuantity.value = 1
-  cartMessage.value = ''
 }
 
 function closeItemModal(): void {
@@ -114,27 +94,44 @@ function increaseQuantity(): void {
   selectedQuantity.value = Math.min(99, selectedQuantity.value + 1)
 }
 
+function showAlert(type: AlertType, title: string, message: string): void {
+  const id = ++alertId
+  alerts.value.push({
+    id,
+    type,
+    title,
+    message,
+  })
+
+  const timeout = setTimeout(() => {
+    alerts.value = alerts.value.filter((alert) => alert.id !== id)
+    alertTimeouts.delete(id)
+  }, 2800)
+  alertTimeouts.set(id, timeout)
+}
+
 function addToCart(): void {
-  if (!selectedItem.value) return
-
-  const cart = parseCartItems(localStorage.getItem(CART_STORAGE_KEY))
-  const existing = cart.find((item) => item.id === selectedItem.value?.id)
-
-  if (existing) {
-    existing.quantity += selectedQuantity.value
-  } else {
-    cart.push({
-      id: selectedItem.value.id,
-      name: selectedItem.value.name,
-      price: selectedItem.value.price,
-      category: selectedItem.value.category,
-      image: selectedItem.value.image,
-      quantity: selectedQuantity.value,
-    })
+  if (!selectedItem.value) {
+    showAlert('error', 'Falha ao adicionar', 'Selecione um item válido para continuar.')
+    return
   }
 
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
-  cartMessage.value = `${selectedQuantity.value} item(ns) adicionado(s) ao carrinho.`
+  try {
+    store.dispatch('cart/addItemToCart', {
+      item: {
+        id: selectedItem.value.id,
+        name: selectedItem.value.name,
+        price: selectedItem.value.price,
+        category: selectedItem.value.category,
+        image: selectedItem.value.image,
+      },
+      quantity: selectedQuantity.value,
+    })
+
+    showAlert('success', 'Adicionado ao carrinho', `${selectedQuantity.value} item(ns) de ${selectedItem.value.name}.`)
+  } catch {
+    showAlert('error', 'Falha ao adicionar', 'Não foi possível atualizar seu carrinho agora.')
+  }
 }
 
 function handleEscape(event: KeyboardEvent): void {
@@ -154,6 +151,8 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEscape)
+  alertTimeouts.forEach((timeout) => clearTimeout(timeout))
+  alertTimeouts.clear()
 })
 
 const filteredItems = computed(() => {
@@ -178,6 +177,33 @@ const itemSubtotal = computed(() => {
   if (!selectedItem.value) return '$0.00'
   return formatMoney(parsePriceToNumber(selectedItem.value.price) * selectedQuantity.value)
 })
+
+function getAlertStyles(type: AlertType) {
+  if (type === 'success') {
+    return {
+      border: 'border-emerald-400/40',
+      accent: 'bg-emerald-400',
+      title: 'text-emerald-300',
+      icon: 'check_circle',
+    }
+  }
+
+  if (type === 'error') {
+    return {
+      border: 'border-red-400/40',
+      accent: 'bg-red-400',
+      title: 'text-red-300',
+      icon: 'cancel',
+    }
+  }
+
+  return {
+    border: 'border-slate-300/40',
+    accent: 'bg-slate-200',
+    title: 'text-slate-100',
+    icon: 'info',
+  }
+}
 </script>
 
 <template>
@@ -272,6 +298,35 @@ const itemSubtotal = computed(() => {
       </section>
     </main>
 
+    <div class="pointer-events-none fixed right-4 top-16 z-[90] flex w-[min(92vw,380px)] flex-col gap-3 md:right-8 md:top-6">
+      <TransitionGroup
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="translate-y-3 opacity-0"
+        enter-to-class="translate-y-0 opacity-100"
+        leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="translate-y-0 opacity-100"
+        leave-to-class="translate-y-3 opacity-0"
+      >
+        <aside
+          v-for="alert in alerts"
+          :key="alert.id"
+          class="pointer-events-auto rounded-2xl border bg-black/90 p-4 shadow-[0_14px_50px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+          :class="getAlertStyles(alert.type).border"
+          role="status"
+          aria-live="polite"
+        >
+          <div class="flex items-start gap-3">
+            <span class="mt-1 h-2.5 w-2.5 rounded-full" :class="getAlertStyles(alert.type).accent"></span>
+            <div class="flex-1">
+              <p class="font-headline text-xs font-bold uppercase tracking-[0.2em]" :class="getAlertStyles(alert.type).title">{{ alert.title }}</p>
+              <p class="mt-1 text-sm text-zinc-100">{{ alert.message }}</p>
+            </div>
+            <span class="material-symbols-outlined text-base text-zinc-100/90">{{ getAlertStyles(alert.type).icon }}</span>
+          </div>
+        </aside>
+      </TransitionGroup>
+    </div>
+
     <div
       v-if="selectedItem"
       class="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 px-4 py-8 backdrop-blur-md"
@@ -330,10 +385,6 @@ const itemSubtotal = computed(() => {
             <p class="text-xs uppercase tracking-widest text-outline">Subtotal</p>
             <p class="font-headline text-2xl font-black text-primary-container">{{ itemSubtotal }}</p>
           </div>
-
-          <p v-if="cartMessage" class="rounded-lg bg-primary-container/15 px-3 py-2 text-xs font-medium text-primary-container">
-            {{ cartMessage }}
-          </p>
 
           <button
             class="rounded-full border border-primary-container/40 bg-gradient-to-r from-primary to-primary-container px-7 py-3.5 text-xs font-black uppercase tracking-[0.22em] text-on-primary-fixed shadow-[0_10px_30px_rgba(255,255,255,0.26)] transition-all hover:scale-[1.02] hover:shadow-[0_14px_36px_rgba(255,255,255,0.38)]"
