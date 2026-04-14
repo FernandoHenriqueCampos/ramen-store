@@ -36,6 +36,13 @@ function exitAdmin() {
         >
           Menu
         </RouterLink>
+        <RouterLink
+          class="font-headline text-xs font-bold uppercase tracking-tighter transition-colors transition-transform duration-300 ease-out hover:scale-105"
+          :class="route.path === '/cardapio' ? 'border-b-2 border-[#ff5625] pb-1 text-[#ff5625]' : 'text-[#e5e2e1] hover:text-[#ff5625]'"
+          to="/cardapio"
+        >
+          Cardapio
+        </RouterLink>
       </div>
 
       <div class="flex items-center gap-3">
