@@ -1,10 +1,90 @@
 <!DOCTYPE html>
-<html lang="">
+<html class="dark" lang="">
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <title>RAMEN MONOLITH</title>
+    <script>
+      tailwind = {
+        config: {
+          darkMode: 'class',
+          theme: {
+            extend: {
+              colors: {
+                'on-secondary-fixed': '#1a1b1f',
+                'inverse-primary': '#b12d00',
+                secondary: '#c6c6cb',
+                'on-primary-container': '#541100',
+                'on-background': '#e5e2e1',
+                'on-primary-fixed-variant': '#872000',
+                'on-surface-variant': '#e7bdb2',
+                'on-secondary-container': '#b5b4ba',
+                'surface-dim': '#131313',
+                primary: '#ffb5a0',
+                surface: '#131313',
+                'surface-bright': '#3a3939',
+                'on-primary': '#601400',
+                'on-primary-fixed': '#3b0900',
+                'on-tertiary': '#2f3131',
+                'on-secondary': '#2f3034',
+                'surface-container-low': '#1c1b1b',
+                'surface-container': '#201f1f',
+                'on-error': '#690005',
+                'primary-container': '#ff5625',
+                'on-error-container': '#ffdad6',
+                'surface-container-highest': '#353534',
+                'primary-fixed': '#ffdbd1',
+                'on-tertiary-container': '#282a2a',
+                'tertiary-container': '#909191',
+                'secondary-fixed-dim': '#c6c6cb',
+                'tertiary-fixed-dim': '#c6c6c7',
+                'on-tertiary-fixed': '#1a1c1c',
+                'tertiary-fixed': '#e2e2e2',
+                'surface-container-lowest': '#0e0e0e',
+                outline: '#ad887e',
+                'error-container': '#93000a',
+                'outline-variant': '#5d4038',
+                'on-surface': '#e5e2e1',
+                'primary-fixed-dim': '#ffb5a0',
+                'secondary-container': '#46464b',
+                background: '#131313',
+                'inverse-surface': '#e5e2e1',
+                'on-tertiary-fixed-variant': '#454747',
+                tertiary: '#c6c6c7',
+                'surface-container-high': '#2a2a2a',
+                'on-secondary-fixed-variant': '#46464b',
+                'surface-variant': '#353534',
+                'surface-tint': '#ffb5a0',
+                'secondary-fixed': '#e3e2e7',
+                'inverse-on-surface': '#313030',
+                error: '#ffb4ab'
+              },
+              borderRadius: {
+                DEFAULT: '0.125rem',
+                lg: '0.25rem',
+                xl: '0.5rem',
+                full: '0.75rem'
+              },
+              fontFamily: {
+                headline: ['Manrope'],
+                body: ['Inter'],
+                label: ['Inter']
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@700;800&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    >
   </head>
   <body>
     <div id="app"></div>
