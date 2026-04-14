@@ -41,7 +41,7 @@ function exitAdmin() {
       <div class="mt-auto p-4">
         <div class="flex items-center gap-3 rounded-lg bg-surface-container p-4">
           <div class="h-10 w-10 overflow-hidden rounded-full bg-surface-container-highest">
-            <img alt="Admin Avatar" class="h-full w-full object-cover" data-alt="portrait of a focused professional chef wearing black uniform in a modern kitchen setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxxgphvvozJqLY4CvP40BZdYwJW4wwat-Y21KPKTg22B023gSrXPTqE7FupT7tdZ9bHkQv6TDHuAg3g5vXMfFhZWQC1WyNBZUSIsSeQIkmy8fEwdYqtZplrUzqMhINlczAuPfir4Ca-zY5qCg0iBrDE2zBTJ4_4ljy7RD4tfRPKU4TWC_z-4ROeXtUHbOLMpjqpGIOuIjfwdO4tXWGZ5JRePDl3LY7wXBP2uoT-E1TlL_shMgjalrgg-EOK3fIMixuyVH49V3uLzKK">
+            <img alt="Admin Avatar" class="h-full w-full object-cover" data-alt="portrait of a focused professional chef wearing black uniform in a modern kitchen setting" src="../assets/images/admin-avatar.png">
           </div>
           <div>
             <p class="text-xs font-bold text-on-surface">K. Yamamoto</p>
@@ -135,7 +135,7 @@ function exitAdmin() {
             <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
               <div class="col-span-5 flex items-center gap-4">
                 <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="top-down close up of premium tonkotsu ramen with soft boiled egg and spring onions on dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLfB-1XQS1F7V75FM501k2lKr2uDcURPADh5F1IYYV9G1WK93lOTQLug25M0Aom3_9G8CqOxu7Sk0ttEZRNFb2g1d72PIa17zGUlSOTKI91xeTd6EZXuMt90VwcEGdMKDZngx5_5p3fTt0bqsIrA8Li5-tyI00jpIhld2MpQ-FrgM_EzSYAyfMmKp3blnlUGep9CGUINeH-SJVD6ThHcabLL9JvkE8bwBpMR3pc51OzChpDWvghiytuIMMx4zGWs749zGv6ExoLyEk">
+                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="top-down close up of premium tonkotsu ramen with soft boiled egg and spring onions on dark background" src="../assets/images/admin-black-garlic-tonkotsu.png">
                 </div>
                 <div>
                   <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">BLACK GARLIC TONKOTSU</p>
@@ -162,7 +162,7 @@ function exitAdmin() {
             <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
               <div class="col-span-5 flex items-center gap-4">
                 <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="dramatic lighting on spicy miso ramen with red chili threads and wood ear mushrooms" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDkd7kzcrECoR8O8EK5MQuRdyI7tmpEOV_16AWiQ0d-10TRLeEtKpY-i_1zoMLLBVMd6MQ7lQOTUKEs6H1OOj8C2cx_fJo_YNAj9MAJVyD1KSUCXwJl0_GDrtcvIQqF-w8v4NtHRkRVk35yYHMr8d_NJPBWwXh-r6EtH5gnqSWhummeK_5hVfzdQ3atKDRVtJ1e-xFBFTfTD2QFPz2tPqR90Y_C5VPbtMp6SgQAyD0mwSoOWc7XqawTzMv-x9watLWKf40I_9bk_qkU">
+                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="dramatic lighting on spicy miso ramen with red chili threads and wood ear mushrooms" src="../assets/images/admin-volcano-miso.png">
                 </div>
                 <div>
                   <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">VOLCANO SPICY MISO</p>
@@ -189,7 +189,7 @@ function exitAdmin() {
             <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
               <div class="col-span-5 flex items-center gap-4">
                 <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest opacity-40 grayscale">
-                  <img alt="Gyoza" class="h-full w-full object-cover" data-alt="crispy pan-fried gyoza dumplings served on a black ceramic plate with steam rising" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGxweRvoT8GtDjGEl5w_XscAbro9_fFdN5yLCz2C2prkHTk6uRL_jSo062wHfbSqNT_m-sXyN9z8YEuHWQDi7q4lqF-Hiy83lPyiSa7c5zS6aG2ck4Bk0O8CgpLZSuDV5GAZP20M0EvGFn1J-OibeJ5XXJPHVUV1vJwc4vzVYm-DaW87zBbZ18oAC1cMg-lHcbYNlXm6uaNMRgMq15ji8diginssSnuEZPR3Ti1OHopLY8bHivKrYpMFOS3t39NNvVMDvBcVYcbJc0">
+                  <img alt="Gyoza" class="h-full w-full object-cover" data-alt="crispy pan-fried gyoza dumplings served on a black ceramic plate with steam rising" src="../assets/images/admin-gyoza.png">
                 </div>
                 <div>
                   <p class="monolith-header text-sm font-bold tracking-tight text-on-surface opacity-50">CRISPY WAGYU GYOZA</p>
@@ -216,7 +216,7 @@ function exitAdmin() {
             <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
               <div class="col-span-5 flex items-center gap-4">
                 <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Truffle Ramen" class="h-full w-full object-cover" data-alt="luxury ramen bowl featuring shaved black truffles and gold leaf garnish in a rich creamy broth" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9_L15oO84vLw6ePPR13wIczBCdUpIHn65J7vgkDvUufmbRTU2O4x_ol5MF4PBg4KejKjJCrNWKEGy-vmDL2a82CPqIgVRGwZZfjvJ_FJ2-ndWl6A5caVMxrdbWXCSeQPb2aLV6vZb7T1YqwXyJ7ltXAUusmJzCUzyG4jtvu1-40uMv_GqxVdyD7__UVFxXkCEHKy75vFoBOmHGlQHhdBp5slEAtWLYIMKb7f-v63K1Xlum3E11iToBjNmxwh8gUKvHqlMMzUlcxJE">
+                  <img alt="Truffle Ramen" class="h-full w-full object-cover" data-alt="luxury ramen bowl featuring shaved black truffles and gold leaf garnish in a rich creamy broth" src="../assets/images/admin-truffle-shio.png">
                 </div>
                 <div>
                   <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">TRUFFLE SHIO RAMEN</p>

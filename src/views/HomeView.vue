@@ -1,5 +1,30 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+
 import UniversalMenu from '@/components/UniversalMenu.vue'
+
+const heroSection = ref<HTMLElement | null>(null)
+const heroOffsetY = ref(0)
+
+const heroParallaxStyle = computed(() => ({
+  transform: `translate3d(0, ${heroOffsetY.value}px, 0) scale(1.08)`,
+}))
+
+const updateHeroParallax = () => {
+  if (!heroSection.value) return
+
+  const sectionTop = heroSection.value.getBoundingClientRect().top
+  heroOffsetY.value = Math.round(sectionTop * -0.2)
+}
+
+onMounted(() => {
+  updateHeroParallax()
+  window.addEventListener('scroll', updateHeroParallax, { passive: true })
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('scroll', updateHeroParallax)
+})
 </script>
 
 <template>
@@ -7,9 +32,9 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
     <UniversalMenu />
 
     <main>
-      <section class="relative flex h-screen flex-col items-center justify-center overflow-hidden">
+      <section ref="heroSection" class="relative flex h-screen flex-col items-center justify-center overflow-hidden">
         <div class="absolute inset-0 z-0">
-          <img class="h-full w-full object-cover opacity-60 brightness-75 grayscale-[20%]" data-alt="top-down dramatic photo of a steaming ramen bowl with rich dark broth and golden eggs on a matte black ceramic background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBYL43phSUHgFBKiEyfYxplHZB6cI2jqbAeseJ4m73QVGAhN1TbzO5njhD3hUESwFPZO4Qf2BRT1Gt4cUE36AUw5LOe1g1s_4n6u5maEg5UjhXZF39L4ibnYRVDihdscvqO7ExFpeCGHXMyywyE90o6uQcX7Dg1DZkBwsGqpjxLEUqif1vbq8tJcv3I5FtmBhk215OTKBA2cFCZxlNkhsJUZNJUJYr7vvDMPBh198fgQrX42dK1CSzgEbqwMCvNQ2wW0pUxnY_a1iUw">
+          <img :style="heroParallaxStyle" class="h-full w-full object-cover opacity-60 brightness-75 grayscale-[20%] will-change-transform" data-alt="top-down dramatic photo of a steaming ramen bowl with rich dark broth and golden eggs on a matte black ceramic background" src="../assets/images/home-hero.png">
           <div class="absolute inset-0 bg-gradient-to-b from-background/20 via-transparent to-background"></div>
         </div>
         <div class="relative z-10 space-y-4 px-4 text-center">
@@ -42,7 +67,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
         </div>
         <div class="md:col-span-5 md:mt-24">
           <div class="group relative aspect-square overflow-hidden rounded-lg bg-surface-container shadow-2xl">
-            <img class="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" data-alt="close-up of artisan ramen noodles being lifted from a steaming pot with dramatic rim lighting and water droplets" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCnVM4Ud0I5ZbeaagUopQ2tf7lOLdbPgFsrrUO_2rgiJ5ThoYkKIVModtufu61luH5xEvTmkUhvqFySTV0RLpLBsMRjKUQ9w2PI_TLZ_LeUq9tA1kwULNrJhzswDnJ8NmH4sWtURHVWuP2k99zbFNSDAoeVxaHFCxjYzipAIKxw-MCim7K3MZdjMc1VWNYdbdpqj7D-YAuk1ot2ksx4HlQgwcRnO1MpvA9fmYu1eSjIr5r1j_AX4PfTmU98iZr26IMnuEHtApRxseg7">
+            <img class="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" data-alt="close-up of artisan ramen noodles being lifted from a steaming pot with dramatic rim lighting and water droplets" src="../assets/images/home-philosophy-noodles.png">
             <div class="absolute inset-0 bg-primary-container/10 mix-blend-overlay"></div>
           </div>
         </div>
@@ -59,7 +84,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
           </div>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div class="group relative flex min-h-[500px] flex-col justify-between overflow-hidden rounded-lg bg-surface-container p-8 md:col-span-2 md:row-span-2">
-              <img class="absolute inset-0 h-full w-full object-cover opacity-40 transition-transform duration-500 group-hover:scale-105" data-alt="dramatic lighting on a black bowl of spicy tonkotsu ramen with vibrant red chili oil swirls and green scallions" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACg452f7xDe5EtFwZ6KIdRUfPGtWo5_NLOUtoYbfxm8VSnezq0bydo59Ik95_wNTW58LHEoXOz7-vd5i-qRjECLoHKGJ_OtuA434pWbrVVMi-tEM3SQY1Z6tscGRE4oY8B1nvovGVTYif2nFLDPA8WFV3Uv_Lqx0VV6vagvEg5-IvRunzup1hIgGFihRpD8PMsWf0-JMKcSoZ-5jKuI5G1-1DMjEe9o9-hNoDr_HF8tZKTSn2vLK4dtuNu9SU0DyMsIEEH-1kBkLRx">
+              <img class="absolute inset-0 h-full w-full object-cover opacity-40 transition-transform duration-500 group-hover:scale-105" data-alt="dramatic lighting on a black bowl of spicy tonkotsu ramen with vibrant red chili oil swirls and green scallions" src="../assets/images/home-spec-nebula.png">
               <div class="relative z-10 flex h-full flex-col justify-between">
                 <div>
                   <span class="rounded-full bg-primary-container px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-on-primary-fixed">Spec 01</span>
@@ -81,7 +106,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
               <h4 class="font-headline font-bold text-on-surface">CORE TONKOTSU</h4>
               <div class="space-y-4">
                 <div class="h-32 w-full overflow-hidden rounded-DEFAULT">
-                  <img class="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0" data-alt="minimalist overhead shot of a classic ramen bowl with simple garnishes on a dark textured table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoe57P-C-YkIOX4fTmgsjJDAbsgHwlYUbRpPfwMmoSmvQn1b-bFKf3xt-5BuMfvQNDmWFJ1NwKgecgH-8es3CW9RPinj_DvWD2AxEmZUTZ2fpkhLBQ_ReuBcDdF6-EkEBrGqt8gd-ODj4IOMLaTzVvO4J5nqLgRRmbJsdPyx-5HNC33QVANg-fu0cvP9bHRIOvV0r02YpK57VsmWNyoeZOQm11tD5QOivL6dHjyJC0cvOb4Gf8bx0VyHz8eXRvfXL2i82BbyGL5-_b">
+                  <img class="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0" data-alt="minimalist overhead shot of a classic ramen bowl with simple garnishes on a dark textured table" src="../assets/images/home-core-tonkotsu.png">
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="font-headline font-bold text-primary-container">$18.00</span>
@@ -94,7 +119,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
               <h4 class="font-headline font-bold text-on-surface">KINETIC MISO</h4>
               <div class="space-y-4">
                 <div class="h-32 w-full overflow-hidden rounded-DEFAULT">
-                  <img class="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0" data-alt="macro shot of ramen toppings like bamboo shoots and marinated egg with soft cinematic bokeh" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRm-77a5Nu3kynNVzLdeF_r8fzvo5uaemsUgxq02Dm7-PubdWalCljbUVWOG0bg4_Q1pKdtW1OJnlHp8otJOX-e-bPMkW6WKvcdZFiKD1j3l8trk7SgeXNWihy_ScAXjm4dKXUOkZWCJR9yKpYOm7DH3ZdrBS__SxqsxehhD2RTsO-NkTNOWLFJvOkcjvg8GQv-7l7BD8G_ZuLL15YxFUabwSV6tu-qEfLuHwDOFncZu4ynuv35N1_IvR_foEihTyRYlzWRnCsHmJh">
+                  <img class="h-full w-full object-cover grayscale transition-all duration-500 group-hover:grayscale-0" data-alt="macro shot of ramen toppings like bamboo shoots and marinated egg with soft cinematic bokeh" src="../assets/images/home-kinetic-miso.png">
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="font-headline font-bold text-primary-container">$19.50</span>

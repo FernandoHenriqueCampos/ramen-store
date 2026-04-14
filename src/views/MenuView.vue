@@ -25,7 +25,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
         <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
           <div class="group relative overflow-hidden bg-surface-container-low md:col-span-8">
             <div class="aspect-[16/9] w-full overflow-hidden">
-              <img alt="Signature Tonkotsu" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Close-up of premium tonkotsu ramen with creamy broth, soft-boiled egg, and seared pork belly on a dark ceramic background with moody lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtB1HJmldUjRzMDCYcyFOQiz286YcCkcv70ujKS1DY7idE9q7dHp0kMSPRyxj9WS3Ml6OqVPvo3rG4SU3_FemPlcX73IpWKVAQmflwnBzMOiMjV2Gr6fvxFBWmzbDy2rjYY6JZJFlXohUkBREWgywXZKOxQNoS9B9Nq4nlTEbxg36y3_kgQcJTsbdyYWXvh9Fdvf1zGPSKsAA5FGwcFprKq9WNobfUl4sybFGxd7Dro_BILdyem3MzhIwr9OEzADZO_E3V7VNAYC-T">
+              <img alt="Signature Tonkotsu" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Close-up of premium tonkotsu ramen with creamy broth, soft-boiled egg, and seared pork belly on a dark ceramic background with moody lighting" src="../assets/images/menu-monolith-tonkotsu.png">
             </div>
             <div class="flex h-full flex-col justify-between p-8">
               <div>
@@ -46,7 +46,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
 
           <div class="group flex flex-col bg-surface-container md:col-span-4">
             <div class="aspect-square w-full overflow-hidden">
-              <img alt="Spicy Miso" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Overhead shot of spicy red miso ramen with chili oil droplets and green scallions in a black bowl against obsidian background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBuA3W86iN724lapyqX4zJbwaHwVATapoxcZ3HOBG59260p5Ta_16O5bKnnwAaPs-znZxhvAfqIjpRS769w4lqtQtLp8sOz8dKSTEu85PN7VFIgsbZENv5tqc2KOy-VUlW05pHF8dOAYRtTYCl8pLxNAclKvaUvlg9jiqGT58iz7ufh0AHeyugDtO42JGrZuDZ1a26u1gubiGN5ADuuKfk5bG3gHigQOSkEp7KXv0LNmiTj7fAnv_lPnb35J5OoNDRR0R_av3OLNXfU">
+              <img alt="Spicy Miso" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Overhead shot of spicy red miso ramen with chili oil droplets and green scallions in a black bowl against obsidian background" src="../assets/images/menu-thermal-miso.png">
             </div>
             <div class="flex-grow p-6">
               <div class="mb-2 flex items-start justify-between">
@@ -61,7 +61,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
 
           <div class="group flex flex-col bg-surface-container md:col-span-4">
             <div class="aspect-square w-full overflow-hidden">
-              <img alt="Vegan Ramen" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Minimalist vegan ramen with clear kombu broth, enoki mushrooms, and tofu on a dark textured table with focused top light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAb2S_6f0bOcgNbqzDgrT7zWwtHJbUndO_PjFApeMVe3pzA9DXxKJA7IBQhvDMGoAZuyxz-YjrS2qW4b5z82CtOuyoMtAHETlDDVCYV9myHvazLdi27tm5KnPORmWQsnl6LErAOiFuyoN4LwDQGQFpbFQ_jfP_lVdvn4AnCVa6-cTi5bl3E5JWtiO79eiF1MkaMkxf3_GAgyreA57c7JTQVfO72YGLi-4V-GDXKiIXISgm9-LkyXSi_Njw4045FZkw7fBxkcKuNbK5T">
+              <img alt="Vegan Ramen" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Minimalist vegan ramen with clear kombu broth, enoki mushrooms, and tofu on a dark textured table with focused top light" src="../assets/images/menu-synthetic-clear.png">
             </div>
             <div class="flex-grow p-6">
               <div class="mb-2 flex items-start justify-between">
@@ -76,7 +76,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
 
           <div class="group relative flex flex-col overflow-hidden bg-surface-container-low md:col-span-8 md:flex-row">
             <div class="aspect-square overflow-hidden md:w-1/2 md:aspect-auto">
-              <img alt="Black Garlic Ramen" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Black garlic ramen with dark ink-like broth and vivid toppings, high contrast photography with deep shadows and sharp highlights" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEHu6ZEpESFBgsXU3pRWksSsEV81igZaWo7WEApYEW8MFIY_8CmgHCfwQ9xUR0oVvjI1h9cd4vBRNesWP17HLHAfTh8I6feegtulkQf2w0seKmZ6bT4OxXTO9t3XZY0m7cqmGlXB9LXj1hxqZRlgU9dMsCQIQoxFe9bkUM_gZWkhtZK86OQZBH2WGNIr1vplpz-m5L9NEuxw4f3-tr_MV8jTevfmaSX-VY7xVMoSUHqTh77VdBmGPcVMP0OVJceVobpaUhe8cdLq3f">
+              <img alt="Black Garlic Ramen" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Black garlic ramen with dark ink-like broth and vivid toppings, high contrast photography with deep shadows and sharp highlights" src="../assets/images/menu-obsidian-shoyu.png">
             </div>
             <div class="flex flex-col justify-center p-8 md:w-1/2">
               <div class="mb-4">
@@ -102,7 +102,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
         <div class="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div class="group flex items-start space-x-6">
             <div class="h-24 w-24 flex-shrink-0 overflow-hidden bg-surface-container">
-              <img alt="Gyoza" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Pan-seared gyoza dumplings with perfectly crispy bottoms and delicate steam, on a dark ceramic plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7sdYm2tV7OzuamV_uTj594Iy6IHiVNTRApnhMI36SQKzv66rwnHJu4jLGxZg0AP_Qyh_WqhyjknFqLiphhqzEogQ5d2jJYD_pIqs3mj7X25_f8baij0Fx278nJxP_8CNuwbYuHWTMcZ123cX0OuxbXYbJpg8TQ8Nh0OYGjGUQVXjZx51nsxHLHmnbtX-LkovdE2NPxXm9cKFRQxdfITU9_0vaXoir843mxvSUY5s-G3X2swz4ZHNDd1LyJ51rZry0s50AUjrfgbx4">
+              <img alt="Gyoza" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Pan-seared gyoza dumplings with perfectly crispy bottoms and delicate steam, on a dark ceramic plate" src="../assets/images/menu-gyoza.png">
             </div>
             <div>
               <h3 class="font-headline text-lg font-bold uppercase">Seared Gyoza</h3>
@@ -112,7 +112,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
           </div>
           <div class="group flex items-start space-x-6">
             <div class="h-24 w-24 flex-shrink-0 overflow-hidden bg-surface-container">
-              <img alt="Karaage" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Golden fried karaage chicken pieces with yuzu mayo on a dark minimalist background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBXX4iwrbVYHU1zl6QoPLQu5fEkeCdNp4jGQiV4rqFswLMYzBcRgHaUgFRIunF2YbSewtHc-vpAl9lX9bvtmtcgel-1hyVIG30eUCp50VTFEScZFZlrC8qdwy66ChBKQSArUtan-qIgNBZb9fwpnrOGPVq_v6T5ToUU2iyoapdKMUr7VJpvXGQOmDdQDfQ-DGjByXDYBk20Oix_G0OGmoj--CoNrKoR63-CjJr-RGNax3nRnXpw_ugZ3jFG0SqqDAVb2gaWICMQp6Pl">
+              <img alt="Karaage" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Golden fried karaage chicken pieces with yuzu mayo on a dark minimalist background" src="../assets/images/menu-karaage.png">
             </div>
             <div>
               <h3 class="font-headline text-lg font-bold uppercase">Atomic Karaage</h3>
@@ -122,7 +122,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
           </div>
           <div class="group flex items-start space-x-6">
             <div class="h-24 w-24 flex-shrink-0 overflow-hidden bg-surface-container">
-              <img alt="Edamame" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Fresh green edamame pods with sea salt flakes on a dark volcanic stone plate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBW1UEgX_NLBAmr9Al5QJjyB2B5cW0NvVMrxjLEK59_fHRJjHHgFIYi8Sw1NvK5AVvPERWsw78YGIAWJ08KpPTd3hxjYPwe0HrSEsVnF1ljBpi0j4Z8-oEsMDiBSoz0Y1oQsUttvbj1Ch67vTubS3rLIwKZYn7jLbt415u08gVRmalE259pZ0dAvI19DC88U9UIr835cU4qo0hTpv_yvx6qtbQrdVHEDEm6evVOi41k1daBEs3zN6hD_Bq7nc0PCJrL2P8UNqW_ifwz">
+              <img alt="Edamame" class="h-full w-full object-cover grayscale-[80%] transition-all duration-500 group-hover:grayscale-0" data-alt="Fresh green edamame pods with sea salt flakes on a dark volcanic stone plate" src="../assets/images/menu-edamame.png">
             </div>
             <div>
               <h3 class="font-headline text-lg font-bold uppercase">Smoked Edamame</h3>
@@ -168,7 +168,7 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
 
       <section class="relative flex h-[614px] w-full items-center justify-center overflow-hidden">
         <div class="absolute inset-0 z-0">
-          <img alt="Chef Signature" class="h-full w-full object-cover opacity-40 grayscale" data-alt="Close-up of chef's hands carefully placing toppings on a bowl of ramen with steam rising in a dark industrial kitchen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-YG-cB0qCtI97SKjFDYhmhY4J9ATGpuhs42dd6PIyjA3wFp-KNtbJZ2a0fXWe76lUS9yQBwpukbM6HCBRPAm9JnWGvSlQ_oILAEyZf6dg14n0mcTY0R7URN8btNLfl6iNU3KyRjRkMzuz6bBVALGJfataCjTA8YrB0eRtmS9FsLyDsHr_VGBJNubPr1k7X8GgPWIcKXWLAzgYo66ZgvhP370tbK-ydJ7LQEWgMWSv35mwmJBgnE8_Zb0O9xoHXVBZRZd-6pFbImwY">
+          <img alt="Chef Signature" class="h-full w-full object-cover opacity-40 grayscale" data-alt="Close-up of chef's hands carefully placing toppings on a bowl of ramen with steam rising in a dark industrial kitchen" src="../assets/images/menu-chef-signature.png">
         </div>
         <div class="relative z-10 max-w-2xl border border-white/5 bg-surface-bright/60 p-12 text-center backdrop-blur-[40px]">
           <span class="mb-4 block font-label text-xs uppercase tracking-[0.4em] text-primary-container">Monthly Calibration</span>
