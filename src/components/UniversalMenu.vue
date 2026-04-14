@@ -1,16 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import { isAdminAuthenticated, logoutAdmin } from '@/services/adminAuth'
 
 const route = useRoute()
 const router = useRouter()
-
-function isAuthed() {
-  return isAdminAuthenticated()
-}
+const store = useStore()
+const isAuthed = computed(() => store.getters['adminAuth/isAuthenticated'] as boolean)
 
 function exitAdmin() {
-  logoutAdmin()
+  store.dispatch('adminAuth/logout')
   router.push('/')
 }
 </script>
@@ -41,7 +40,7 @@ function exitAdmin() {
 
       <div class="flex items-center gap-3">
         <RouterLink
-          v-if="!isAuthed()"
+          v-if="!isAuthed"
           class="scale-95 font-headline text-xs font-bold uppercase tracking-tighter text-[#e5e2e1] transition-all duration-200 hover:text-[#ff5625]"
           to="/login"
         >
@@ -56,7 +55,7 @@ function exitAdmin() {
         </RouterLink>
 
         <button
-          v-if="isAuthed()"
+          v-if="isAuthed"
           class="rounded-DEFAULT border border-outline-variant/30 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-outline transition-colors hover:text-on-surface"
           @click="exitAdmin"
         >

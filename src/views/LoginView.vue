@@ -1,13 +1,28 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import { loginAdmin } from '@/services/adminAuth'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
+const store = useStore()
+const username = ref('')
+const password = ref('')
+const errorMessage = ref('')
 
-function enterAdmin() {
-  loginAdmin()
+async function enterAdmin() {
+  const isValid = (await store.dispatch('adminAuth/login', {
+    username: username.value.trim(),
+    password: password.value,
+  })) as boolean
+
+  if (!isValid) {
+    errorMessage.value = 'Invalid credentials. Use admin/admin.'
+    return
+  }
+
+  errorMessage.value = ''
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/admin'
   router.push(redirect)
 }
@@ -22,22 +37,21 @@ function enterAdmin() {
       <div class="login-panel glass-panel">
         <span class="kicker">Access Portal</span>
         <h1>Welcome Back.</h1>
-        <p>Please authenticate to access culinary preferences and reservations.</p>
+        <p>Please authenticate to access the admin panel.</p>
 
         <form class="login-form" @submit.prevent="enterAdmin">
           <label>
-            Email Identity
-            <input type="email" placeholder="name@monolith.com" />
+            Name
+            <input v-model="username" type="text" placeholder="admin" autocomplete="username" required />
           </label>
 
           <label>
-            Access Key
-            <input type="password" placeholder="........" />
+            Password
+            <input v-model="password" type="password" placeholder="admin" autocomplete="current-password" required />
           </label>
 
+          <p v-if="errorMessage" class="text-sm text-error">{{ errorMessage }}</p>
           <button type="submit" class="btn btn-primary wide">Authenticate</button>
-          <button type="button" class="btn btn-secondary wide">Biometric Login</button>
-          <button type="button" class="btn btn-secondary wide" @click="enterAdmin">Enter Admin Panel</button>
         </form>
 
         <p class="muted-line">New to the Monolith? <a href="#">Request Membership</a></p>
