@@ -112,7 +112,7 @@ function showAlert(type: AlertType, title: string, message: string): void {
 
 function addToCart(): void {
   if (!selectedItem.value) {
-    showAlert('error', 'Falha ao adicionar', 'Selecione um item válido para continuar.')
+    showAlert('error', 'Unable to add', 'Select a valid item to continue.')
     return
   }
 
@@ -128,9 +128,9 @@ function addToCart(): void {
       quantity: selectedQuantity.value,
     })
 
-    showAlert('success', 'Adicionado ao carrinho', `${selectedQuantity.value} item(ns) de ${selectedItem.value.name}.`)
+    showAlert('success', 'Added to cart', `${selectedQuantity.value} item(s) of ${selectedItem.value.name}.`)
   } catch {
-    showAlert('error', 'Falha ao adicionar', 'Não foi possível atualizar seu carrinho agora.')
+    showAlert('error', 'Unable to add', 'We could not update your cart right now.')
   }
 }
 
@@ -214,11 +214,11 @@ function getAlertStyles(type: AlertType) {
       <header class="space-y-5">
         <p class="font-label text-xs uppercase tracking-[0.35em] text-primary-container">User Menu Board</p>
         <h1 class="font-headline text-5xl font-black uppercase leading-[0.85] tracking-tighter md:text-7xl">
-          Cardapio<br />
+          Menu<br />
           <span class="text-primary-container">Dynamic Grid</span>
         </h1>
         <p class="max-w-2xl text-sm text-on-surface-variant md:text-base">
-          Itens adicionados pelos usuarios em um mural visual tipo quebra-cabeca, com foco na foto e leitura rapida dos detalhes.
+          User-added items in a puzzle-style visual board, with focus on photography and quick detail scanning.
         </p>
       </header>
 
@@ -229,7 +229,7 @@ function getAlertStyles(type: AlertType) {
             <input
               v-model="searchTerm"
               type="text"
-              placeholder="Buscar por nome ou descricao"
+              placeholder="Search by name or description"
               class="w-full rounded-full border border-outline-variant/25 bg-surface-container px-12 py-3 text-sm text-on-surface outline-none transition-all placeholder:text-outline/70 focus:border-primary-container"
             />
           </div>
@@ -293,8 +293,8 @@ function getAlertStyles(type: AlertType) {
         v-if="filteredItems.length === 0"
         class="rounded-2xl border border-outline-variant/20 bg-surface-container-low p-10 text-center"
       >
-        <p class="font-headline text-2xl font-bold uppercase tracking-tight">Nenhum item encontrado</p>
-        <p class="mt-2 text-sm text-on-surface-variant">Tente outro termo de busca ou ajuste o filtro de categoria.</p>
+        <p class="font-headline text-2xl font-bold uppercase tracking-tight">No items found</p>
+        <p class="mt-2 text-sm text-on-surface-variant">Try another search term or adjust the category filter.</p>
       </section>
     </main>
 
@@ -390,7 +390,7 @@ function getAlertStyles(type: AlertType) {
             class="rounded-full border border-primary-container/40 bg-gradient-to-r from-primary to-primary-container px-7 py-3.5 text-xs font-black uppercase tracking-[0.22em] text-on-primary-fixed shadow-[0_10px_30px_rgba(255,255,255,0.26)] transition-all hover:scale-[1.02] hover:shadow-[0_14px_36px_rgba(255,255,255,0.38)]"
             @click="addToCart"
           >
-            Adicionar ao carrinho
+            Add to cart
           </button>
         </div>
       </div>
