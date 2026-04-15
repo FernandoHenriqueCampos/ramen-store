@@ -1,14 +1,55 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useStore } from 'vuex'
 
+import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
+import nebulaImage from '@/assets/images/home-spec-nebula.png'
+import { defaultUserCatalogItems, type UserCatalogItem } from '@/data/userMenuItems'
+import type { RootState } from '@/store'
 
 const heroSection = ref<HTMLElement | null>(null)
 const heroOffsetY = ref(0)
+const store = useStore<RootState>()
+const router = useRouter()
+const alerts = ref<UiAlert[]>([])
+let alertId = 0
+const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
+const RELEASE_WINDOW_SECONDS = 180
+const limitedReleaseItem = ref<UserCatalogItem | null>(null)
+const limitedReleaseSecondsLeft = ref(RELEASE_WINDOW_SECONDS)
+let limitedReleaseTimer: ReturnType<typeof setInterval> | null = null
 
 const heroParallaxStyle = computed(() => ({
   transform: `translate3d(0, ${heroOffsetY.value}px, 0) scale(1.08)`,
 }))
+const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; quantity: number }>)
+
+const limitedReleaseOriginalPrice = computed(() => {
+  if (!limitedReleaseItem.value) return 0
+  return parsePriceToNumber(limitedReleaseItem.value.price)
+})
+
+const limitedReleaseDiscountedPrice = computed(() => {
+  return Number((limitedReleaseOriginalPrice.value * 0.9).toFixed(2))
+})
+
+const limitedReleaseCartId = computed(() => {
+  if (!limitedReleaseItem.value) return ''
+  return `limited-release-${limitedReleaseItem.value.id}`
+})
+
+const isLimitedReleaseInCart = computed(() => {
+  if (!limitedReleaseCartId.value) return false
+  return cartItems.value.some((item) => item.id === limitedReleaseCartId.value)
+})
+
+const limitedReleaseCountdownLabel = computed(() => {
+  const minutes = Math.floor(limitedReleaseSecondsLeft.value / 60)
+  const seconds = limitedReleaseSecondsLeft.value % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+})
 
 const updateHeroParallax = () => {
   if (!heroSection.value) return
@@ -17,13 +58,125 @@ const updateHeroParallax = () => {
   heroOffsetY.value = Math.round(sectionTop * -0.2)
 }
 
+const addNebulaToCart = () => {
+  store.dispatch('cart/addItemToCart', {
+    item: {
+      id: 'spec-nebula',
+      name: 'THE NEBULA',
+      price: '$24.00',
+      category: 'Ramen',
+      image: nebulaImage,
+    },
+    quantity: 1,
+  })
+
+  showAlert('success', 'Added to cart', 'THE NEBULA has been added to your cart.')
+}
+
+function parsePriceToNumber(price: string): number {
+  const normalized = price.replace(/[^0-9.]/g, '')
+  const parsed = Number.parseFloat(normalized)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function formatMoney(value: number): string {
+  return `$${value.toFixed(2)}`
+}
+
+function pickRandomLimitedReleaseItem(): UserCatalogItem {
+  if (defaultUserCatalogItems.length <= 1) {
+    return defaultUserCatalogItems[0]!
+  }
+
+  let item = defaultUserCatalogItems[Math.floor(Math.random() * defaultUserCatalogItems.length)]!
+  while (item.id === limitedReleaseItem.value?.id) {
+    item = defaultUserCatalogItems[Math.floor(Math.random() * defaultUserCatalogItems.length)]!
+  }
+
+  return item
+}
+
+function resetLimitedRelease() {
+  limitedReleaseItem.value = pickRandomLimitedReleaseItem()
+  limitedReleaseSecondsLeft.value = RELEASE_WINDOW_SECONDS
+}
+
+function startLimitedReleaseTimer() {
+  if (limitedReleaseTimer) return
+
+  limitedReleaseTimer = setInterval(() => {
+    if (limitedReleaseSecondsLeft.value <= 1) {
+      resetLimitedRelease()
+      return
+    }
+
+    limitedReleaseSecondsLeft.value -= 1
+  }, 1000)
+}
+
+function stopLimitedReleaseTimer() {
+  if (!limitedReleaseTimer) return
+  clearInterval(limitedReleaseTimer)
+  limitedReleaseTimer = null
+}
+
+function showAlert(type: AlertType, title: string, message: string): void {
+  const id = ++alertId
+  alerts.value.push({
+    id,
+    type,
+    title,
+    message,
+  })
+
+  const timeout = setTimeout(() => {
+    alerts.value = alerts.value.filter((alert) => alert.id !== id)
+    alertTimeouts.delete(id)
+  }, 2800)
+  alertTimeouts.set(id, timeout)
+}
+
+function goToCardapioItem(itemId: string): void {
+  router.push({
+    path: '/cardapio',
+    query: { item: itemId },
+  })
+}
+
+function addLimitedReleaseToCart() {
+  if (!limitedReleaseItem.value) return
+
+  if (isLimitedReleaseInCart.value) {
+    showAlert('info', 'Limit reached', 'You can only buy 1 unit of this limited release.')
+    return
+  }
+
+  store.dispatch('cart/addItemToCart', {
+    item: {
+      id: limitedReleaseCartId.value,
+      name: `${limitedReleaseItem.value.name} • Limited Release`,
+      price: formatMoney(limitedReleaseDiscountedPrice.value),
+      category: limitedReleaseItem.value.category,
+      image: limitedReleaseItem.value.image,
+    },
+    quantity: 1,
+  })
+
+  showAlert('success', 'Limited release added', `${limitedReleaseItem.value.name} with 10% OFF is in your cart.`)
+}
+
 onMounted(() => {
   updateHeroParallax()
+  resetLimitedRelease()
+  startLimitedReleaseTimer()
   window.addEventListener('scroll', updateHeroParallax, { passive: true })
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', updateHeroParallax)
+  stopLimitedReleaseTimer()
+  alertTimeouts.forEach((timeout) => clearTimeout(timeout))
+  alertTimeouts.clear()
 })
 </script>
 
@@ -80,7 +233,7 @@ onBeforeUnmount(() => {
               <h2 class="font-headline text-3xl font-extrabold tracking-tighter">TECHNICAL SPECIFICATIONS</h2>
               <p class="font-body text-on-surface-variant">Limited quantity daily batches for absolute quality assurance.</p>
             </div>
-            <a class="border-b border-outline-variant/40 pb-1 text-xs font-bold uppercase tracking-widest transition-colors hover:text-primary-container" href="#">View All Specs</a>
+            <RouterLink class="border-b border-outline-variant/40 pb-1 text-xs font-bold uppercase tracking-widest transition-colors hover:text-primary-container" to="/cardapio">View All Specs</RouterLink>
           </div>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div class="group relative flex min-h-[500px] flex-col justify-between overflow-hidden rounded-lg bg-surface-container p-8 md:col-span-2 md:row-span-2">
@@ -94,7 +247,10 @@ onBeforeUnmount(() => {
                   <p class="font-body text-sm text-on-surface/80">Black garlic infused tonkotsu, 48-hour cured chashu, smoked wood ear mushrooms.</p>
                   <div class="flex items-center justify-between">
                     <span class="font-headline text-lg font-bold text-primary-container">$24.00</span>
-                    <button class="rounded-full border border-outline-variant/40 p-2 transition-colors hover:bg-primary-container hover:text-on-primary-fixed">
+                    <button
+                      class="flex h-11 w-11 items-center justify-center rounded-full border border-outline-variant/40 transition-colors hover:bg-primary-container hover:text-on-primary-fixed"
+                      @click="addNebulaToCart"
+                    >
                       <span class="material-symbols-outlined text-lg">add</span>
                     </button>
                   </div>
@@ -110,7 +266,14 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="font-headline font-bold text-primary-container">$18.00</span>
-                  <span class="material-symbols-outlined text-sm opacity-40">arrow_forward</span>
+                  <button
+                    class="rounded-full p-1 text-outline/70 transition-colors hover:text-primary-container"
+                    type="button"
+                    aria-label="Open Core Tonkotsu details on menu"
+                    @click="goToCardapioItem('ramen-monolith-tonkotsu')"
+                  >
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
                 </div>
               </div>
             </div>
@@ -123,25 +286,69 @@ onBeforeUnmount(() => {
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="font-headline font-bold text-primary-container">$19.50</span>
-                  <span class="material-symbols-outlined text-sm opacity-40">arrow_forward</span>
+                  <button
+                    class="rounded-full p-1 text-outline/70 transition-colors hover:text-primary-container"
+                    type="button"
+                    aria-label="Open Kinetic Miso details on menu"
+                    @click="goToCardapioItem('ramen-thermal-miso')"
+                  >
+                    <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div class="flex items-center gap-8 rounded-lg border border-outline-variant/10 bg-gradient-to-br from-surface-container-high to-surface-container-highest p-8 md:col-span-2">
+            <div class="flex items-center gap-8 rounded-lg border border-primary-container/25 bg-gradient-to-br from-surface-container-high to-surface-container-highest p-8 md:col-span-2">
               <div class="space-y-4">
-                <h3 class="font-headline text-2xl font-black tracking-tighter">CHEF'S SIGNATURE OVERLAY</h3>
-                <p class="font-body text-xs leading-relaxed text-on-surface-variant">A rotating limited release exploring experimental flavor architectures. Available only during twilight hours.</p>
-                <button class="rounded-DEFAULT bg-on-surface px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-surface-container-lowest transition-colors hover:bg-primary-container">Explore R&amp;D</button>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-full border border-primary-container/45 bg-primary-container/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-container">
+                    Limited Release
+                  </span>
+                  <span class="rounded-full border border-outline-variant/25 bg-surface-container px-3 py-1 font-headline text-[11px] font-bold tracking-wider text-on-surface">
+                    Resets in {{ limitedReleaseCountdownLabel }}
+                  </span>
+                </div>
+                <h3 class="font-headline text-2xl font-black tracking-tighter">
+                  {{ limitedReleaseItem?.name ?? 'Loading release...' }}
+                </h3>
+                <p class="font-body text-xs leading-relaxed text-on-surface-variant">
+                  Oferta randômica com 10% OFF por tempo limitado. Ao acabar o contador, outro item entra em promoção.
+                </p>
+                <div class="flex items-center gap-3">
+                  <span class="font-headline text-sm font-bold text-on-surface-variant line-through">
+                    {{ formatMoney(limitedReleaseOriginalPrice) }}
+                  </span>
+                  <span class="font-headline text-xl font-black text-primary-container">
+                    {{ formatMoney(limitedReleaseDiscountedPrice) }}
+                  </span>
+                </div>
+                <button
+                  class="rounded-DEFAULT px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors"
+                  :class="isLimitedReleaseInCart
+                    ? 'cursor-not-allowed bg-outline-variant/35 text-on-surface-variant'
+                    : 'bg-on-surface text-surface-container-lowest hover:bg-primary-container'"
+                  :disabled="isLimitedReleaseInCart"
+                  @click="addLimitedReleaseToCart"
+                >
+                  {{ isLimitedReleaseInCart ? 'Limit Reached (1/1)' : 'Add Limited Release' }}
+                </button>
               </div>
-              <div class="flex h-32 w-32 flex-shrink-0 items-center justify-center rounded-full border border-primary-container/30 bg-surface-container-lowest">
-                <span class="material-symbols-outlined text-4xl text-primary-container" data-weight="fill">science</span>
+              <div class="flex h-32 w-32 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-primary-container/30 bg-surface-container-lowest">
+                <img
+                  v-if="limitedReleaseItem"
+                  :src="limitedReleaseItem.image"
+                  :alt="limitedReleaseItem.name"
+                  class="h-full w-full object-cover"
+                >
+                <span v-else class="material-symbols-outlined text-4xl text-primary-container" data-weight="fill">science</span>
               </div>
             </div>
           </div>
         </div>
       </section>
     </main>
+
+    <AppToastAlerts :alerts="alerts" />
 
     <footer class="w-full border-t border-[#5d4038]/20 bg-[#0e0e0e]">
       <div class="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-8 px-12 py-16 md:flex-row">

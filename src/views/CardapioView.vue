@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 import AppToastAlerts from '@/components/AppToastAlerts.vue'
@@ -10,6 +11,7 @@ import type { RootState } from '@/store'
 const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
 const categories: Array<CatalogCategory | 'All'> = ['All', 'Ramen', 'Drinks', 'Sides']
 const store = useStore<RootState>()
+const route = useRoute()
 
 const searchTerm = ref('')
 const selectedCategory = ref<CatalogCategory | 'All'>('All')
@@ -141,14 +143,46 @@ function handleEscape(event: KeyboardEvent): void {
   }
 }
 
+function getRequestedItemId(): string | null {
+  const raw = route.query.item
+  if (typeof raw === 'string' && raw.trim().length > 0) {
+    return raw.trim()
+  }
+
+  if (Array.isArray(raw) && typeof raw[0] === 'string' && raw[0].trim().length > 0) {
+    return raw[0].trim()
+  }
+
+  return null
+}
+
+function openRequestedItemModal(): void {
+  const requestedItemId = getRequestedItemId()
+  if (!requestedItemId) return
+
+  const item = menuItems.value.find((menuItem) => menuItem.id === requestedItemId)
+  if (!item) return
+
+  selectedCategory.value = item.category
+  openItemModal(item)
+}
+
 onMounted(() => {
   const storedItems = parseUserItems(localStorage.getItem(USER_MENU_STORAGE_KEY))
   if (storedItems) {
     menuItems.value = storedItems
   }
 
+  openRequestedItemModal()
   window.addEventListener('keydown', handleEscape)
 })
+
+watch(
+  () => route.query.item,
+  () => {
+    openRequestedItemModal()
+  },
+)
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEscape)
@@ -215,7 +249,7 @@ const itemSubtotal = computed(() => {
               type="button"
               class="rounded-full border px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors"
               :class="selectedCategory === category
-                ? 'border-primary-container bg-primary-container text-on-primary-fixed'
+                ? 'border-black bg-white text-black'
                 : 'border-outline-variant/30 bg-surface-container text-on-surface-variant hover:text-on-surface'"
               @click="selectedCategory = category"
             >

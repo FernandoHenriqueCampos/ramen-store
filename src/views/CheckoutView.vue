@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 
@@ -30,7 +30,16 @@ function parsePriceToNumber(price: string): number {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
+function isLimitedReleaseItem(id: string): boolean {
+  return id.startsWith('limited-release-')
+}
+
 function increaseItemQuantity(item: { id: string; quantity: number }) {
+  if (isLimitedReleaseItem(item.id)) {
+    showAlert('info', 'Limit reached', 'Limited release items can only be purchased once.')
+    return
+  }
+
   if (item.quantity >= 99) return
 
   store.dispatch('cart/updateCartItemQuantity', {
@@ -89,6 +98,17 @@ function confirmPayment() {
 function cancelPaymentConfirmation() {
   isConfirmPaymentOpen.value = false
 }
+
+onMounted(() => {
+  cartItems.value.forEach((item) => {
+    if (isLimitedReleaseItem(item.id) && item.quantity > 1) {
+      store.dispatch('cart/updateCartItemQuantity', {
+        id: item.id,
+        quantity: 1,
+      })
+    }
+  })
+})
 
 onBeforeUnmount(() => {
   alertTimeouts.forEach((timeout) => clearTimeout(timeout))
@@ -169,6 +189,8 @@ onBeforeUnmount(() => {
                   <span class="min-w-8 text-center font-headline text-base font-black text-zinc-100">{{ item.quantity }}</span>
                   <button
                     class="h-8 w-8 rounded-full border border-white/20 text-sm font-bold text-zinc-200 transition-colors hover:border-white hover:text-white"
+                    :class="isLimitedReleaseItem(item.id) ? 'cursor-not-allowed border-white/10 text-zinc-500 hover:border-white/10 hover:text-zinc-500' : ''"
+                    :disabled="isLimitedReleaseItem(item.id)"
                     @click="increaseItemQuantity(item)"
                   >
                     +
