@@ -6,11 +6,16 @@ import { useStore } from 'vuex'
 import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import nebulaImage from '@/assets/images/home-spec-nebula.png'
+import cinematicBowlVideo from '@/assets/videos/cinematic-bowl-of-ramen.mp4'
 import { defaultUserCatalogItems, type UserCatalogItem } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
 
 const heroSection = ref<HTMLElement | null>(null)
 const heroOffsetY = ref(0)
+const scrollVideoSection = ref<HTMLElement | null>(null)
+const scrollVideoElement = ref<HTMLVideoElement | null>(null)
+const scrollVideoDuration = ref(0)
+const scrollVideoTravelDistance = ref(1)
 const store = useStore<RootState>()
 const router = useRouter()
 const alerts = ref<UiAlert[]>([])
@@ -20,6 +25,7 @@ const RELEASE_WINDOW_SECONDS = 180
 const limitedReleaseItem = ref<UserCatalogItem | null>(null)
 const limitedReleaseSecondsLeft = ref(RELEASE_WINDOW_SECONDS)
 let limitedReleaseTimer: ReturnType<typeof setInterval> | null = null
+let scrollSyncFrame: number | null = null
 
 const heroParallaxStyle = computed(() => ({
   transform: `translate3d(0, ${heroOffsetY.value}px, 0) scale(1.08)`,
@@ -56,6 +62,61 @@ const updateHeroParallax = () => {
 
   const sectionTop = heroSection.value.getBoundingClientRect().top
   heroOffsetY.value = Math.round(sectionTop * -0.2)
+}
+
+const updateScrollVideoMetrics = () => {
+  if (!scrollVideoSection.value) return
+
+  scrollVideoTravelDistance.value = Math.max(
+    scrollVideoSection.value.offsetHeight - window.innerHeight,
+    1,
+  )
+}
+
+const syncScrollVideoCurrentTime = () => {
+  const video = scrollVideoElement.value
+  const section = scrollVideoSection.value
+  if (!video || !section || scrollVideoDuration.value <= 0) return
+
+  const sectionTop = section.getBoundingClientRect().top
+  const clampedDistance = Math.min(
+    Math.max(-sectionTop, 0),
+    scrollVideoTravelDistance.value,
+  )
+  const progress = clampedDistance / scrollVideoTravelDistance.value
+
+  const targetTime = progress * scrollVideoDuration.value
+  if (Math.abs(video.currentTime - targetTime) > 1 / 60) {
+    video.currentTime = targetTime
+  }
+}
+
+const queueViewportSync = () => {
+  if (scrollSyncFrame !== null) return
+  scrollSyncFrame = window.requestAnimationFrame(() => {
+    scrollSyncFrame = null
+    updateHeroParallax()
+    updateScrollVideoMetrics()
+    syncScrollVideoCurrentTime()
+  })
+}
+
+const handleViewportScroll = () => {
+  queueViewportSync()
+}
+
+const handleViewportResize = () => {
+  queueViewportSync()
+}
+
+const handleScrollVideoLoadedMetadata = () => {
+  const video = scrollVideoElement.value
+  if (!video || !Number.isFinite(video.duration) || video.duration <= 0) return
+
+  scrollVideoDuration.value = video.duration
+  video.currentTime = 0
+  video.pause()
+  queueViewportSync()
 }
 
 const addNebulaToCart = () => {
@@ -167,13 +228,21 @@ function addLimitedReleaseToCart() {
 
 onMounted(() => {
   updateHeroParallax()
+  updateScrollVideoMetrics()
+  syncScrollVideoCurrentTime()
   resetLimitedRelease()
   startLimitedReleaseTimer()
-  window.addEventListener('scroll', updateHeroParallax, { passive: true })
+  window.addEventListener('scroll', handleViewportScroll, { passive: true })
+  window.addEventListener('resize', handleViewportResize, { passive: true })
 })
 
 onBeforeUnmount(() => {
-  window.removeEventListener('scroll', updateHeroParallax)
+  window.removeEventListener('scroll', handleViewportScroll)
+  window.removeEventListener('resize', handleViewportResize)
+  if (scrollSyncFrame !== null) {
+    window.cancelAnimationFrame(scrollSyncFrame)
+    scrollSyncFrame = null
+  }
   stopLimitedReleaseTimer()
   alertTimeouts.forEach((timeout) => clearTimeout(timeout))
   alertTimeouts.clear()
@@ -201,27 +270,40 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section class="mx-auto grid max-w-7xl grid-cols-1 items-start gap-16 px-8 py-32 md:grid-cols-12">
-        <div class="space-y-12 md:col-span-7">
-          <div class="space-y-4">
-            <span class="font-label text-xs font-bold uppercase tracking-widest text-primary-container">The Philosophy</span>
-            <h2 class="font-headline text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl">CRAFTED WITH<br>PRECISION.</h2>
-          </div>
-          <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-            <div class="space-y-4">
-              <h3 class="font-headline text-xl font-bold text-on-surface">Thermal Control</h3>
-              <p class="font-body leading-relaxed text-on-surface-variant">Our broth is calibrated at a constant 92&deg;C for 36 hours. Every gram of collagen is extracted through rigorous temperature cycles to ensure peak molecular density.</p>
+      <section ref="scrollVideoSection" class="relative h-[320vh]">
+        <div class="sticky top-0 flex min-h-screen items-center bg-background/70">
+          <div class="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-16 px-8 py-16 md:grid-cols-12">
+            <div class="space-y-12 md:col-span-7">
+              <div class="space-y-4">
+                <span class="font-label text-xs font-bold uppercase tracking-widest text-primary-container">The Philosophy</span>
+                <h2 class="font-headline text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl">CRAFTED WITH<br>PRECISION.</h2>
+              </div>
+              <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                <div class="space-y-4">
+                  <h3 class="font-headline text-xl font-bold text-on-surface">Thermal Control</h3>
+                  <p class="font-body leading-relaxed text-on-surface-variant">Our broth is calibrated at a constant 92&deg;C for 36 hours. Every gram of collagen is extracted through rigorous temperature cycles to ensure peak molecular density.</p>
+                </div>
+                <div class="space-y-4">
+                  <h3 class="font-headline text-xl font-bold text-on-surface">Noodle Geometry</h3>
+                  <p class="font-body leading-relaxed text-on-surface-variant">Designed with specific hydration levels to maintain tensile strength. The surface area is calculated to maximize broth adherence for a perfect flavor payload.</p>
+                </div>
+              </div>
             </div>
-            <div class="space-y-4">
-              <h3 class="font-headline text-xl font-bold text-on-surface">Noodle Geometry</h3>
-              <p class="font-body leading-relaxed text-on-surface-variant">Designed with specific hydration levels to maintain tensile strength. The surface area is calculated to maximize broth adherence for a perfect flavor payload.</p>
+            <div class="md:col-span-5 md:mt-24">
+              <div class="relative aspect-square overflow-hidden rounded-lg bg-surface-container shadow-2xl">
+                <video
+                  ref="scrollVideoElement"
+                  class="h-full w-full object-cover"
+                  :src="cinematicBowlVideo"
+                  muted
+                  playsinline
+                  preload="auto"
+                  disablepictureinpicture
+                  disableremoteplayback
+                  @loadedmetadata="handleScrollVideoLoadedMetadata"
+                ></video>
+              </div>
             </div>
-          </div>
-        </div>
-        <div class="md:col-span-5 md:mt-24">
-          <div class="group relative aspect-square overflow-hidden rounded-lg bg-surface-container shadow-2xl">
-            <img class="h-full w-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" data-alt="close-up of artisan ramen noodles being lifted from a steaming pot with dramatic rim lighting and water droplets" src="../assets/images/home-philosophy-noodles.png">
-            <div class="absolute inset-0 bg-primary-container/10 mix-blend-overlay"></div>
           </div>
         </div>
       </section>

@@ -1,5 +1,62 @@
 <script setup lang="ts">
+import { onBeforeUnmount, ref } from 'vue'
+import { useStore } from 'vuex'
+
+import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
+import { defaultUserCatalogItems } from '@/data/userMenuItems'
+import type { RootState } from '@/store'
+
+const store = useStore<RootState>()
+const alerts = ref<UiAlert[]>([])
+let alertId = 0
+const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
+
+function showAlert(type: AlertType, title: string, message: string): void {
+  const id = ++alertId
+  alerts.value.push({
+    id,
+    type,
+    title,
+    message,
+  })
+
+  const timeout = setTimeout(() => {
+    alerts.value = alerts.value.filter((alert) => alert.id !== id)
+    alertTimeouts.delete(id)
+  }, 2800)
+  alertTimeouts.set(id, timeout)
+}
+
+function addRamenToCart(itemId: string): void {
+  const item = defaultUserCatalogItems.find((menuItem) => menuItem.id === itemId)
+  if (!item) {
+    showAlert('error', 'Unable to add', 'We could not find this ramen item.')
+    return
+  }
+
+  try {
+    store.dispatch('cart/addItemToCart', {
+      item: {
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        category: item.category,
+        image: item.image,
+      },
+      quantity: 1,
+    })
+
+    showAlert('success', 'Added to cart', `${item.name} has been added to your cart.`)
+  } catch {
+    showAlert('error', 'Unable to add', 'We could not update your cart right now.')
+  }
+}
+
+onBeforeUnmount(() => {
+  alertTimeouts.forEach((timeout) => clearTimeout(timeout))
+  alertTimeouts.clear()
+})
 </script>
 
 <template>
@@ -36,6 +93,15 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
                 <p class="max-w-md text-sm font-light leading-loose text-on-surface-variant">
                   48-hour bone marrow reduction, triple-pressed alkaline noodles, house-cured chashu, and a precise 6.5-minute organic egg.
                 </p>
+                <div class="mt-5">
+                  <button
+                    class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
+                    type="button"
+                    @click="addRamenToCart('ramen-monolith-tonkotsu')"
+                  >
+                    <span class="material-symbols-outlined text-lg">add</span>
+                  </button>
+                </div>
               </div>
               <div class="mt-8 flex gap-3">
                 <span class="bg-surface-container-highest px-3 py-1 font-label text-[10px] uppercase tracking-widest text-on-surface-variant">Signature</span>
@@ -56,6 +122,15 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
               <p class="mb-2 text-xs font-light leading-relaxed text-on-surface-variant">
                 Fermented chili paste, charred corn, and high-tensile rye noodles. A thermal gradient of heat.
               </p>
+              <div class="mt-4">
+                <button
+                  class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
+                  type="button"
+                  @click="addRamenToCart('ramen-thermal-miso')"
+                >
+                  <span class="material-symbols-outlined text-lg">add</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -71,6 +146,15 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
               <p class="mb-2 text-xs font-light leading-relaxed text-on-surface-variant">
                 Double-filtered kombu and shiitake broth. Hand-pulled wheat noodles. Minimalist aesthetic.
               </p>
+              <div class="mt-4">
+                <button
+                  class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
+                  type="button"
+                  @click="addRamenToCart('ramen-synthetic-clear')"
+                >
+                  <span class="material-symbols-outlined text-lg">add</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -88,6 +172,15 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
                 <p class="text-sm font-light leading-loose text-on-surface-variant">
                   Burnt garlic oil infusion with aged soy sauce, duck confit, and bamboo shoots. A deep, dark dive into flavor.
                 </p>
+                <div class="mt-5">
+                  <button
+                    class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
+                    type="button"
+                    @click="addRamenToCart('ramen-obsidian-shoyu')"
+                  >
+                    <span class="material-symbols-outlined text-lg">add</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -182,6 +275,8 @@ import UniversalMenu from '@/components/UniversalMenu.vue'
         </div>
       </section>
     </main>
+
+    <AppToastAlerts :alerts="alerts" />
 
     <footer class="w-full border-t border-[#5d4038]/20 bg-[#0e0e0e]">
       <div class="mx-auto flex w-full max-w-7xl flex-col items-center justify-between px-12 py-16 md:flex-row">
