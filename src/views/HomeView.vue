@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 
@@ -16,6 +16,7 @@ const scrollVideoSection = ref<HTMLElement | null>(null)
 const scrollVideoElement = ref<HTMLVideoElement | null>(null)
 const scrollVideoDuration = ref(0)
 const scrollVideoTravelDistance = ref(1)
+const scrollVideoProgress = ref(0)
 const store = useStore<RootState>()
 const router = useRouter()
 const alerts = ref<UiAlert[]>([])
@@ -27,10 +28,69 @@ const limitedReleaseSecondsLeft = ref(RELEASE_WINDOW_SECONDS)
 let limitedReleaseTimer: ReturnType<typeof setInterval> | null = null
 let scrollSyncFrame: number | null = null
 
+type StoryTopic = {
+  title: string
+  description: string
+}
+
+type StoryStage = {
+  topics: [StoryTopic, StoryTopic]
+}
+
+const storyStages: StoryStage[] = [
+  {
+    topics: [
+      {
+        title: 'Thermal Control',
+        description:
+          'Our broth is calibrated at a constant 92 C for 36 hours. Every gram of collagen is extracted through rigorous temperature cycles to ensure peak molecular density.',
+      },
+      {
+        title: 'Noodle Geometry',
+        description:
+          'Designed with specific hydration levels to maintain tensile strength. The surface area is calculated to maximize broth adherence for a perfect flavor payload.',
+      },
+    ],
+  },
+  {
+    topics: [
+      {
+        title: 'Aroma Layering',
+        description:
+          'Aromatic oils are introduced in controlled micro-doses to create top notes first, then deeper roasted notes as the bowl evolves.',
+      },
+      {
+        title: 'Umami Stack',
+        description:
+          'Kombu, shiitake, and tare are balanced in timed reductions so each sip hits sweet, saline, and savory in sequence.',
+      },
+    ],
+  },
+  {
+    topics: [
+      {
+        title: 'Final Calibration',
+        description:
+          'Before plating, we run final checks for density, aroma projection, and serving temperature to keep the experience precise.',
+      },
+      {
+        title: 'Serving Rhythm',
+        description:
+          'Assembly timing is synchronized to seconds, ensuring toppings, noodles, and broth reach the guest at peak performance.',
+      },
+    ],
+  },
+]
+
 const heroParallaxStyle = computed(() => ({
   transform: `translate3d(0, ${heroOffsetY.value}px, 0) scale(1.08)`,
 }))
 const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; quantity: number }>)
+const activeStoryStageIndex = computed(() =>
+  Math.min(storyStages.length - 1, Math.floor(scrollVideoProgress.value * storyStages.length)),
+)
+const activeStoryTopics = computed(() => storyStages[activeStoryStageIndex.value]?.topics ?? storyStages[0]!.topics)
+const storyTransitionName = ref<'story-forward' | 'story-backward'>('story-forward')
 
 const limitedReleaseOriginalPrice = computed(() => {
   if (!limitedReleaseItem.value) return 0
@@ -84,6 +144,7 @@ const syncScrollVideoCurrentTime = () => {
     scrollVideoTravelDistance.value,
   )
   const progress = clampedDistance / scrollVideoTravelDistance.value
+  scrollVideoProgress.value = progress
 
   const targetTime = progress * scrollVideoDuration.value
   if (Math.abs(video.currentTime - targetTime) > 1 / 60) {
@@ -118,6 +179,11 @@ const handleScrollVideoLoadedMetadata = () => {
   video.pause()
   queueViewportSync()
 }
+
+watch(activeStoryStageIndex, (next, previous) => {
+  if (next === previous) return
+  storyTransitionName.value = next > previous ? 'story-forward' : 'story-backward'
+})
 
 const addNebulaToCart = () => {
   store.dispatch('cart/addItemToCart', {
@@ -270,7 +336,7 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section ref="scrollVideoSection" class="relative h-[320vh]">
+      <section ref="scrollVideoSection" class="relative h-[420vh]">
         <div class="sticky top-0 flex min-h-screen items-center bg-background/70">
           <div class="mx-auto grid w-full max-w-7xl grid-cols-1 items-start gap-16 px-8 py-16 md:grid-cols-12">
             <div class="space-y-12 md:col-span-7">
@@ -278,15 +344,19 @@ onBeforeUnmount(() => {
                 <span class="font-label text-xs font-bold uppercase tracking-widest text-primary-container">The Philosophy</span>
                 <h2 class="font-headline text-4xl font-extrabold leading-tight tracking-tighter md:text-6xl">CRAFTED WITH<br>PRECISION.</h2>
               </div>
-              <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-                <div class="space-y-4">
-                  <h3 class="font-headline text-xl font-bold text-on-surface">Thermal Control</h3>
-                  <p class="font-body leading-relaxed text-on-surface-variant">Our broth is calibrated at a constant 92&deg;C for 36 hours. Every gram of collagen is extracted through rigorous temperature cycles to ensure peak molecular density.</p>
-                </div>
-                <div class="space-y-4">
-                  <h3 class="font-headline text-xl font-bold text-on-surface">Noodle Geometry</h3>
-                  <p class="font-body leading-relaxed text-on-surface-variant">Designed with specific hydration levels to maintain tensile strength. The surface area is calculated to maximize broth adherence for a perfect flavor payload.</p>
-                </div>
+              <div class="relative overflow-hidden">
+                <Transition :name="storyTransitionName">
+                  <div :key="activeStoryStageIndex" class="grid grid-cols-1 gap-8 md:grid-cols-2">
+                    <div class="space-y-4">
+                      <h3 class="font-headline text-xl font-bold text-on-surface">{{ activeStoryTopics[0]?.title }}</h3>
+                      <p class="font-body leading-relaxed text-on-surface-variant">{{ activeStoryTopics[0]?.description }}</p>
+                    </div>
+                    <div class="space-y-4">
+                      <h3 class="font-headline text-xl font-bold text-on-surface">{{ activeStoryTopics[1]?.title }}</h3>
+                      <p class="font-body leading-relaxed text-on-surface-variant">{{ activeStoryTopics[1]?.description }}</p>
+                    </div>
+                  </div>
+                </Transition>
               </div>
             </div>
             <div class="md:col-span-5 md:mt-24">
@@ -455,5 +525,36 @@ onBeforeUnmount(() => {
 
 .tonal-shift {
   background: linear-gradient(180deg, rgba(19, 19, 19, 0) 0%, rgba(28, 27, 27, 1) 100%);
+}
+
+.story-forward-enter-active,
+.story-forward-leave-active,
+.story-backward-enter-active,
+.story-backward-leave-active {
+  transition: transform 1100ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.story-forward-leave-active,
+.story-backward-leave-active {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+}
+
+.story-forward-enter-from {
+  transform: translateX(115%);
+}
+
+.story-forward-leave-to {
+  transform: translateX(-115%);
+}
+
+.story-backward-enter-from {
+  transform: translateX(-115%);
+}
+
+.story-backward-leave-to {
+  transform: translateX(115%);
 }
 </style>
