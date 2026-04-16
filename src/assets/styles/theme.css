@@ -504,8 +504,8 @@ h4,
   position: relative;
   width: min(520px, 100%);
   border: 1px solid color-mix(in srgb, var(--outline) 40%, transparent);
-  border-radius: 10px;
-  padding: 1.5rem;
+  border-radius: 18px;
+  padding: 1.8rem;
 }
 
 .login-panel h1 {
@@ -533,16 +533,55 @@ h4,
 }
 
 .login-form input {
-  border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--outline) 50%, transparent);
-  background: var(--surface-low);
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--outline) 45%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-high) 74%, transparent);
   color: var(--text);
-  padding: 0.7rem;
+  padding: 0.78rem 0.9rem;
+  transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
 
 .login-form input:focus {
   outline: none;
-  border-bottom-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 70%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field input {
+  padding-right: 5.2rem;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.45rem;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 999px;
+  padding: 0.42rem 0.78rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-lowest) 80%, transparent);
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.password-toggle:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-highest) 85%, transparent);
+}
+
+.password-toggle:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .muted-line {
