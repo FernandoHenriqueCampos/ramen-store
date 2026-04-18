@@ -1,10 +1,106 @@
 ﻿<script setup lang="ts">
+import { computed, onMounted, ref, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import UniversalMenu from '@/components/UniversalMenu.vue'
+import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } from '@/data/userMenuItems'
 
 const router = useRouter()
 const store = useStore()
+const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
+
+type InventoryStatus = 'Available' | 'Depleted'
+
+type AdminInventoryItem = UserCatalogItem & {
+  status: InventoryStatus
+}
+
+const menuItems = ref<AdminInventoryItem[]>(defaultUserCatalogItems.map(toAdminInventoryItem))
+const totalItems = computed(() => menuItems.value.length)
+const pageSizeOptions = [5, 10, 20, 30] as const
+const itemsPerPage = ref<number>(5)
+const currentPage = ref(1)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
+const paginatedItems = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value
+  return menuItems.value.slice(start, start + itemsPerPage.value)
+})
+const showingFrom = computed(() => {
+  if (totalItems.value === 0) return 0
+  return (currentPage.value - 1) * itemsPerPage.value + 1
+})
+const showingTo = computed(() => Math.min(currentPage.value * itemsPerPage.value, totalItems.value))
+const visiblePageNumbers = computed(() => Array.from({ length: totalPages.value }, (_, index) => index + 1))
+
+function isValidCategory(value: unknown): value is CatalogCategory {
+  return value === 'Ramen' || value === 'Drinks' || value === 'Sides'
+}
+
+function parseUserItems(raw: string | null): UserCatalogItem[] | null {
+  if (!raw) return null
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+
+    const normalized = parsed.filter((item): item is UserCatalogItem => {
+      return (
+        typeof item?.id === 'string' &&
+        typeof item?.name === 'string' &&
+        typeof item?.description === 'string' &&
+        typeof item?.price === 'string' &&
+        typeof item?.image === 'string' &&
+        isValidCategory(item?.category)
+      )
+    })
+
+    return normalized.length ? normalized : null
+  } catch {
+    return null
+  }
+}
+
+function toAdminInventoryItem(item: UserCatalogItem): AdminInventoryItem {
+  return {
+    ...item,
+    status: 'Available',
+  }
+}
+
+function formatSku(id: string): string {
+  return id.replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 10) || 'ITEM'
+}
+
+function setItemsPerPage(size: number): void {
+  itemsPerPage.value = size
+  currentPage.value = 1
+}
+
+function goToPage(page: number): void {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+}
+
+function goToPreviousPage(): void {
+  goToPage(currentPage.value - 1)
+}
+
+function goToNextPage(): void {
+  goToPage(currentPage.value + 1)
+}
+
+onMounted(() => {
+  const storedItems = parseUserItems(localStorage.getItem(USER_MENU_STORAGE_KEY))
+  if (storedItems) {
+    menuItems.value = storedItems.map(toAdminInventoryItem)
+  }
+})
+
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
 
 function exitAdmin() {
   store.dispatch('adminAuth/logout')
@@ -81,8 +177,8 @@ function exitAdmin() {
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
             <p class="mb-2 text-[10px] uppercase tracking-[0.2em] text-outline">Total Items</p>
             <div class="flex items-end justify-between">
-              <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">48</span>
-              <span class="text-xs font-bold text-primary-container">+4 this month</span>
+              <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">{{ totalItems }}</span>
+              <span class="text-xs font-bold text-primary-container">catalog loaded</span>
             </div>
           </div>
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
@@ -133,106 +229,39 @@ function exitAdmin() {
               <div class="col-span-2 text-right">Operations</div>
             </div>
 
-            <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
+            <div
+              v-for="item in paginatedItems"
+              :key="item.id"
+              class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container"
+            >
               <div class="col-span-5 flex items-center gap-4">
                 <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="top-down close up of premium tonkotsu ramen with soft boiled egg and spring onions on dark background" src="../assets/images/admin-black-garlic-tonkotsu.png">
+                  <img :alt="item.name" class="h-full w-full object-cover" :src="item.image">
                 </div>
                 <div>
-                  <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">BLACK GARLIC TONKOTSU</p>
-                  <p class="text-[10px] font-medium text-outline/70">SKU: MONO-001 • 18hr Broth</p>
+                  <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">{{ item.name.toUpperCase() }}</p>
+                  <p class="text-[10px] font-medium text-outline/70">SKU: {{ formatSku(item.id) }} • {{ item.description }}</p>
                 </div>
               </div>
               <div class="col-span-2">
-                <span class="rounded-sm bg-surface-container-highest px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface">Signature</span>
+                <span class="rounded-sm bg-surface-container-highest px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface">{{ item.category }}</span>
               </div>
               <div class="col-span-2">
-                <span class="text-sm font-black tracking-tighter text-primary-container">$18.50</span>
+                <span class="text-sm font-black tracking-tighter text-primary-container">{{ item.price }}</span>
               </div>
               <div class="col-span-1 flex justify-center">
-                <div class="rounded-sm border border-green-500/30 bg-green-500/5 px-2 py-0.5">
-                  <p class="text-[9px] font-black uppercase tracking-tighter text-green-500">Available</p>
-                </div>
-              </div>
-              <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
-                <button class="p-2 text-outline transition-colors hover:text-white"><span class="material-symbols-outlined text-lg">edit</span></button>
-                <button class="p-2 text-outline transition-colors hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
-              </div>
-            </div>
-
-            <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
-              <div class="col-span-5 flex items-center gap-4">
-                <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Ramen" class="h-full w-full object-cover" data-alt="dramatic lighting on spicy miso ramen with red chili threads and wood ear mushrooms" src="../assets/images/admin-volcano-miso.png">
-                </div>
-                <div>
-                  <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">VOLCANO SPICY MISO</p>
-                  <p class="text-[10px] font-medium text-outline/70">SKU: MONO-002 • Triple Chili</p>
-                </div>
-              </div>
-              <div class="col-span-2">
-                <span class="rounded-sm bg-surface-container-highest px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface">Seasonal</span>
-              </div>
-              <div class="col-span-2">
-                <span class="text-sm font-black tracking-tighter text-primary-container">$19.00</span>
-              </div>
-              <div class="col-span-1 flex justify-center">
-                <div class="rounded-sm border border-green-500/30 bg-green-500/5 px-2 py-0.5">
-                  <p class="text-[9px] font-black uppercase tracking-tighter text-green-500">Available</p>
-                </div>
-              </div>
-              <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
-                <button class="p-2 text-outline transition-colors hover:text-white"><span class="material-symbols-outlined text-lg">edit</span></button>
-                <button class="p-2 text-outline transition-colors hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
-              </div>
-            </div>
-
-            <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
-              <div class="col-span-5 flex items-center gap-4">
-                <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest opacity-40 grayscale">
-                  <img alt="Gyoza" class="h-full w-full object-cover" data-alt="crispy pan-fried gyoza dumplings served on a black ceramic plate with steam rising" src="../assets/images/admin-gyoza.png">
-                </div>
-                <div>
-                  <p class="monolith-header text-sm font-bold tracking-tight text-on-surface opacity-50">CRISPY WAGYU GYOZA</p>
-                  <p class="text-[10px] font-medium text-outline/50">SKU: SIDE-014 • Hand-Pleated</p>
-                </div>
-              </div>
-              <div class="col-span-2">
-                <span class="rounded-sm bg-surface-container-highest px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-outline/50">Sides</span>
-              </div>
-              <div class="col-span-2">
-                <span class="text-sm font-black tracking-tighter text-primary-container/50">$12.00</span>
-              </div>
-              <div class="col-span-1 flex justify-center">
-                <div class="rounded-sm border border-error/30 bg-error/5 px-2 py-0.5">
-                  <p class="text-[9px] font-black uppercase tracking-tighter text-error">Depleted</p>
-                </div>
-              </div>
-              <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
-                <button class="p-2 text-outline transition-colors hover:text-white"><span class="material-symbols-outlined text-lg">edit</span></button>
-                <button class="p-2 text-outline transition-colors hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
-              </div>
-            </div>
-
-            <div class="group grid grid-cols-12 items-center gap-4 border-b border-outline-variant/5 bg-surface-container-low px-6 py-5 transition-colors hover:bg-surface-container">
-              <div class="col-span-5 flex items-center gap-4">
-                <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded bg-surface-container-highest grayscale transition-all duration-500 group-hover:grayscale-0">
-                  <img alt="Truffle Ramen" class="h-full w-full object-cover" data-alt="luxury ramen bowl featuring shaved black truffles and gold leaf garnish in a rich creamy broth" src="../assets/images/admin-truffle-shio.png">
-                </div>
-                <div>
-                  <p class="monolith-header text-sm font-bold tracking-tight text-on-surface">TRUFFLE SHIO RAMEN</p>
-                  <p class="text-[10px] font-medium text-outline/70">SKU: MONO-009 • Himalayan Salt</p>
-                </div>
-              </div>
-              <div class="col-span-2">
-                <span class="rounded-sm bg-surface-container-highest px-2 py-1 text-[10px] font-bold uppercase tracking-widest text-on-surface">Premium</span>
-              </div>
-              <div class="col-span-2">
-                <span class="text-sm font-black tracking-tighter text-primary-container">$24.00</span>
-              </div>
-              <div class="col-span-1 flex justify-center">
-                <div class="rounded-sm border border-green-500/30 bg-green-500/5 px-2 py-0.5">
-                  <p class="text-[9px] font-black uppercase tracking-tighter text-green-500">Available</p>
+                <div
+                  class="rounded-sm px-2 py-0.5"
+                  :class="item.status === 'Available'
+                    ? 'border border-green-500/30 bg-green-500/5'
+                    : 'border border-error/30 bg-error/5'"
+                >
+                  <p
+                    class="text-[9px] font-black uppercase tracking-tighter"
+                    :class="item.status === 'Available' ? 'text-green-500' : 'text-error'"
+                  >
+                    {{ item.status }}
+                  </p>
                 </div>
               </div>
               <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
@@ -243,13 +272,49 @@ function exitAdmin() {
           </div>
 
           <div class="flex items-center justify-between pt-4">
-            <p class="text-[10px] font-bold uppercase tracking-widest text-outline">Displaying 4 of 48 items</p>
+            <div class="flex items-center gap-6">
+              <p class="text-[10px] font-bold uppercase tracking-widest text-outline">Displaying {{ showingFrom }}-{{ showingTo }} of {{ totalItems }} items</p>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-outline">Per page</span>
+                <button
+                  v-for="size in pageSizeOptions"
+                  :key="size"
+                  class="flex h-8 min-w-8 items-center justify-center rounded-sm border px-2 text-[10px] font-bold transition-colors"
+                  :class="itemsPerPage === size
+                    ? 'border-primary-container bg-primary-container text-on-primary-fixed'
+                    : 'border-outline-variant/20 bg-surface-container-low text-outline hover:text-on-surface'"
+                  @click="setItemsPerPage(size)"
+                >
+                  {{ size }}
+                </button>
+              </div>
+            </div>
             <div class="flex gap-2">
-              <button class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-highest text-outline transition-colors hover:text-on-surface"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
-              <button class="flex h-8 w-8 items-center justify-center rounded-sm bg-primary-container text-xs font-bold text-on-primary-fixed">1</button>
-              <button class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-low text-xs font-bold text-outline transition-colors hover:text-on-surface">2</button>
-              <button class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-low text-xs font-bold text-outline transition-colors hover:text-on-surface">3</button>
-              <button class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-highest text-outline transition-colors hover:text-on-surface"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+              <button
+                class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-highest text-outline transition-colors hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage === 1"
+                @click="goToPreviousPage"
+              >
+                <span class="material-symbols-outlined text-sm">chevron_left</span>
+              </button>
+              <button
+                v-for="page in visiblePageNumbers"
+                :key="page"
+                class="flex h-8 w-8 items-center justify-center rounded-sm text-xs font-bold transition-colors"
+                :class="currentPage === page
+                  ? 'bg-primary-container text-on-primary-fixed'
+                  : 'bg-surface-container-low text-outline hover:text-on-surface'"
+                @click="goToPage(page)"
+              >
+                {{ page }}
+              </button>
+              <button
+                class="flex h-8 w-8 items-center justify-center rounded-sm bg-surface-container-highest text-outline transition-colors hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-40"
+                :disabled="currentPage === totalPages"
+                @click="goToNextPage"
+              >
+                <span class="material-symbols-outlined text-sm">chevron_right</span>
+              </button>
             </div>
           </div>
         </section>

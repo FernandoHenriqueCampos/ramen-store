@@ -139,7 +139,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .login-page {
   min-height: 100vh;
-  background: #030507;
+  background: #131313;
 }
 
 .login-screen {
@@ -154,9 +154,7 @@ onBeforeUnmount(() => {
 .login-visual {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(120% 90% at 50% 5%, rgb(255 255 255 / 3%), transparent 45%),
-    linear-gradient(180deg, #04070a 0%, #020406 100%);
+  background: #131313;
 }
 
 .status-dot {
@@ -176,11 +174,12 @@ onBeforeUnmount(() => {
   width: min(430px, 100%);
   border-radius: 12px;
   border: 1px solid rgb(255 255 255 / 8%);
-  background: rgb(0 0 0 / 58%);
+  background: #131313;
   padding: clamp(2rem, 6vw, 2.9rem) clamp(1.35rem, 5vw, 1.85rem) 1.7rem;
   box-shadow:
     0 25px 60px -42px rgb(0 0 0 / 95%),
-    0 0 0 1px rgb(255 255 255 / 2%) inset;
+    0 0 0 1px rgb(255 255 255 / 2%) inset,
+    0 2px 8px rgb(255 255 255 / 7%);
   backdrop-filter: blur(5px);
 }
 
