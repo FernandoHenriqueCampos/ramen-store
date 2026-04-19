@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import UniversalMenu from '@/components/UniversalMenu.vue'
@@ -16,10 +16,32 @@ type AdminInventoryItem = UserCatalogItem & {
 }
 
 const menuItems = ref<AdminInventoryItem[]>(defaultUserCatalogItems.map(toAdminInventoryItem))
+const categoryOptions: CatalogCategory[] = ['Ramen', 'Drinks', 'Sides']
 const totalItems = computed(() => menuItems.value.length)
 const pageSizeOptions = [5, 10, 20, 30] as const
 const itemsPerPage = ref<number>(5)
 const currentPage = ref(1)
+const isCreateModalOpen = ref(false)
+const isEditModalOpen = ref(false)
+const isDeleteModalOpen = ref(false)
+const newItemName = ref('')
+const newItemDescription = ref('')
+const newItemImage = ref('')
+const newItemCategory = ref<CatalogCategory>('Ramen')
+const newItemPriceUsd = ref<number | null>(null)
+const modalError = ref('')
+const editingItemId = ref('')
+const editItemName = ref('')
+const editItemDescription = ref('')
+const editItemImage = ref('')
+const editItemCategory = ref<CatalogCategory>('Ramen')
+const editItemPriceUsd = ref<number | null>(null)
+const editModalError = ref('')
+const deletingItemId = ref('')
+const deletingItemName = ref('')
+const successAlertMessage = ref('')
+const isSuccessAlertVisible = ref(false)
+let successAlertTimeout: ReturnType<typeof setTimeout> | null = null
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
@@ -76,6 +98,168 @@ function setItemsPerPage(size: number): void {
   currentPage.value = 1
 }
 
+function persistUserMenuItems(): void {
+  const itemsToStore: UserCatalogItem[] = menuItems.value.map(({ status: _status, ...item }) => item)
+  localStorage.setItem(USER_MENU_STORAGE_KEY, JSON.stringify(itemsToStore))
+}
+
+function resetNewItemForm(): void {
+  newItemName.value = ''
+  newItemDescription.value = ''
+  newItemImage.value = ''
+  newItemCategory.value = 'Ramen'
+  newItemPriceUsd.value = null
+  modalError.value = ''
+}
+
+function openCreateModal(): void {
+  resetNewItemForm()
+  isEditModalOpen.value = false
+  isCreateModalOpen.value = true
+}
+
+function closeCreateModal(): void {
+  isCreateModalOpen.value = false
+}
+
+function createItemId(name: string): string {
+  const normalizedName = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  return `${normalizedName || 'item'}-${Date.now().toString(36)}`
+}
+
+function parseUsdPriceToNumber(priceText: string): number | null {
+  const normalized = priceText.replace(/[^0-9.]/g, '')
+  if (!normalized) return null
+  const parsed = Number(normalized)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
+function addNewItem(): void {
+  const name = newItemName.value.trim()
+  const description = newItemDescription.value.trim()
+  const image = newItemImage.value.trim()
+  const price = Number(newItemPriceUsd.value)
+
+  if (!name || !description || !image || !Number.isFinite(price) || price <= 0) {
+    modalError.value = 'Fill in name, description, image, type, and a valid USD price.'
+    return
+  }
+
+  const newItem: AdminInventoryItem = {
+    id: createItemId(name),
+    name,
+    description,
+    price: `$${price.toFixed(2)}`,
+    image,
+    category: newItemCategory.value,
+    status: 'Available',
+  }
+
+  menuItems.value = [newItem, ...menuItems.value]
+  persistUserMenuItems()
+  currentPage.value = 1
+  showSuccessAlert(`"${name}" was created successfully.`)
+  closeCreateModal()
+}
+
+function resetEditItemForm(): void {
+  editingItemId.value = ''
+  editItemName.value = ''
+  editItemDescription.value = ''
+  editItemImage.value = ''
+  editItemCategory.value = 'Ramen'
+  editItemPriceUsd.value = null
+  editModalError.value = ''
+}
+
+function openEditModal(item: AdminInventoryItem): void {
+  const parsedPrice = parseUsdPriceToNumber(item.price)
+  editingItemId.value = item.id
+  editItemName.value = item.name
+  editItemDescription.value = item.description
+  editItemImage.value = item.image
+  editItemCategory.value = item.category
+  editItemPriceUsd.value = parsedPrice
+  editModalError.value = ''
+  isCreateModalOpen.value = false
+  isEditModalOpen.value = true
+}
+
+function closeEditModal(): void {
+  isEditModalOpen.value = false
+}
+
+function openDeleteModal(item: AdminInventoryItem): void {
+  deletingItemId.value = item.id
+  deletingItemName.value = item.name
+  isCreateModalOpen.value = false
+  isEditModalOpen.value = false
+  isDeleteModalOpen.value = true
+}
+
+function closeDeleteModal(): void {
+  isDeleteModalOpen.value = false
+  deletingItemId.value = ''
+  deletingItemName.value = ''
+}
+
+function confirmDeleteItem(): void {
+  const id = deletingItemId.value
+  if (!id) {
+    closeDeleteModal()
+    return
+  }
+
+  const removedName = deletingItemName.value || 'Item'
+  menuItems.value = menuItems.value.filter((item) => item.id !== id)
+  persistUserMenuItems()
+  showSuccessAlert(`"${removedName}" was deleted successfully.`)
+  closeDeleteModal()
+}
+
+function saveEditedItem(): void {
+  const id = editingItemId.value
+  const name = editItemName.value.trim()
+  const description = editItemDescription.value.trim()
+  const image = editItemImage.value.trim()
+  const price = Number(editItemPriceUsd.value)
+
+  if (!id || !name || !description || !image || !Number.isFinite(price) || price <= 0) {
+    editModalError.value = 'Fill in name, description, image, type, and a valid USD price.'
+    return
+  }
+
+  menuItems.value = menuItems.value.map((item) => {
+    if (item.id !== id) return item
+    return {
+      ...item,
+      name,
+      description,
+      image,
+      category: editItemCategory.value,
+      price: `$${price.toFixed(2)}`,
+    }
+  })
+
+  persistUserMenuItems()
+  showSuccessAlert(`"${name}" was updated successfully.`)
+  closeEditModal()
+}
+
+function showSuccessAlert(message: string): void {
+  successAlertMessage.value = message
+  isSuccessAlertVisible.value = true
+
+  if (successAlertTimeout) {
+    clearTimeout(successAlertTimeout)
+  }
+
+  successAlertTimeout = setTimeout(() => {
+    isSuccessAlertVisible.value = false
+    successAlertTimeout = null
+  }, 3200)
+}
+
 function goToPage(page: number): void {
   if (page < 1 || page > totalPages.value) return
   currentPage.value = page
@@ -93,6 +277,13 @@ onMounted(() => {
   const storedItems = parseUserItems(localStorage.getItem(USER_MENU_STORAGE_KEY))
   if (storedItems) {
     menuItems.value = storedItems.map(toAdminInventoryItem)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (successAlertTimeout) {
+    clearTimeout(successAlertTimeout)
+    successAlertTimeout = null
   }
 })
 
@@ -152,6 +343,22 @@ function exitAdmin() {
     </aside>
 
     <main class="relative ml-64 flex h-[calc(100vh-5rem)] flex-1 flex-col bg-surface">
+      <transition name="success-alert">
+        <div
+          v-if="isSuccessAlertVisible"
+          class="pointer-events-auto absolute right-8 top-6 z-[85] flex min-w-[280px] max-w-[480px] items-start gap-3 rounded-xl border border-emerald-400/35 bg-[#0f1c17]/95 px-4 py-3 text-emerald-100 shadow-[0_10px_35px_rgba(16,185,129,0.25)] backdrop-blur"
+        >
+          <span class="material-symbols-outlined mt-[1px] text-[20px] text-emerald-300" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-xs font-black uppercase tracking-[0.15em] text-emerald-300">Success</p>
+            <p class="mt-1 text-sm font-semibold text-emerald-100">{{ successAlertMessage }}</p>
+          </div>
+          <button class="text-emerald-300/80 transition-colors hover:text-emerald-100" @click="isSuccessAlertVisible = false">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+      </transition>
+
       <header class="sticky top-0 z-40 flex h-20 items-center justify-between border-b border-outline-variant/10 bg-surface/80 px-10 backdrop-blur-xl">
         <div>
           <h2 class="monolith-header text-2xl font-bold tracking-tighter text-on-surface">MENU MANAGEMENT</h2>
@@ -165,7 +372,7 @@ function exitAdmin() {
           <button class="rounded-sm border border-outline-variant/30 px-4 py-3 text-[10px] font-bold uppercase tracking-[0.15em] text-outline transition-colors hover:text-on-surface" @click="exitAdmin">
             Exit Admin
           </button>
-          <button class="group flex items-center gap-2 rounded-sm bg-primary-container px-6 py-3 text-xs font-bold uppercase tracking-[0.1em] text-on-primary-fixed shadow-[0_0_20px_rgba(255,86,37,0.2)] transition-all hover:scale-[1.02] active:scale-95">
+          <button class="group flex items-center gap-2 rounded-sm bg-primary-container px-6 py-3 text-xs font-bold uppercase tracking-[0.1em] text-on-primary-fixed shadow-[0_0_20px_rgba(255,86,37,0.2)] transition-all hover:scale-[1.02] active:scale-95" @click="openCreateModal">
             <span class="material-symbols-outlined text-sm">add</span>
             Add New Item
           </button>
@@ -265,8 +472,8 @@ function exitAdmin() {
                 </div>
               </div>
               <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
-                <button class="p-2 text-outline transition-colors hover:text-white"><span class="material-symbols-outlined text-lg">edit</span></button>
-                <button class="p-2 text-outline transition-colors hover:text-error"><span class="material-symbols-outlined text-lg">delete</span></button>
+                <button class="p-2 text-outline transition-colors hover:text-white" @click="openEditModal(item)"><span class="material-symbols-outlined text-lg">edit</span></button>
+                <button class="p-2 text-outline transition-colors hover:text-error" @click="openDeleteModal(item)"><span class="material-symbols-outlined text-lg">delete</span></button>
               </div>
             </div>
           </div>
@@ -378,6 +585,240 @@ function exitAdmin() {
           <a class="text-[9px] font-bold uppercase tracking-widest text-outline transition-colors hover:text-primary-container" href="#">Support</a>
         </div>
       </footer>
+
+      <div
+        v-if="isCreateModalOpen"
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(255,86,37,0.18),rgba(0,0,0,0.88)_55%)] p-6 backdrop-blur-md"
+        @click.self="closeCreateModal"
+      >
+        <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
+          <div class="h-1 w-full bg-gradient-to-r from-[#ff5625] via-[#ff7d4d] to-[#ff5625]"></div>
+          <div class="p-7 sm:p-8">
+          <div class="mb-6 flex items-center justify-between">
+            <div>
+              <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Add New Item</h4>
+              <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#8f98a8]">Name, image, type and price in USD</p>
+            </div>
+            <button class="rounded-lg border border-white/10 p-2 text-[#8f98a8] transition-colors hover:border-white/30 hover:text-[#f5f7ff]" @click="closeCreateModal">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <form class="space-y-5" @submit.prevent="addNewItem">
+            <div>
+              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Name</label>
+              <input
+                v-model="newItemName"
+                class="modal-input"
+                placeholder="Example: Spicy Miso"
+                type="text"
+              >
+            </div>
+
+            <div>
+              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Description</label>
+              <textarea
+                v-model="newItemDescription"
+                class="modal-input min-h-[90px] resize-y"
+                placeholder="Short description of the item"
+              ></textarea>
+            </div>
+
+            <div>
+              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Image URL</label>
+              <input
+                v-model="newItemImage"
+                class="modal-input"
+                placeholder="https://..."
+                type="url"
+              >
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Type</label>
+                <div class="modal-select-wrap">
+                  <select v-model="newItemCategory" class="modal-select">
+                    <option v-for="category in categoryOptions" :key="category" :value="category">{{ category }}</option>
+                  </select>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#9fa8b8]">expand_more</span>
+                </div>
+              </div>
+              <div>
+                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Price (USD)</label>
+                <div class="relative">
+                  <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7d4d]">$</span>
+                  <input
+                    v-model.number="newItemPriceUsd"
+                    class="modal-input no-number-spin pl-9 text-right"
+                    min="0.01"
+                    placeholder="12.99"
+                    step="0.01"
+                    type="number"
+                  >
+                </div>
+              </div>
+            </div>
+
+            <p v-if="modalError" class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">{{ modalError }}</p>
+
+            <div class="flex justify-end gap-3 pt-3">
+              <button
+                class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                type="button"
+                @click="closeCreateModal"
+              >
+                Cancel
+              </button>
+              <button
+                class="rounded-lg bg-gradient-to-r from-[#ff5625] to-[#ff7d4d] px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(255,86,37,0.4)] transition-transform hover:scale-[1.02] active:scale-95"
+                type="submit"
+              >
+                Save Item
+              </button>
+            </div>
+          </form>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="isEditModalOpen"
+        class="fixed inset-0 z-[80] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(255,86,37,0.18),rgba(0,0,0,0.88)_55%)] p-6 backdrop-blur-md"
+        @click.self="closeEditModal"
+      >
+        <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
+          <div class="h-1 w-full bg-gradient-to-r from-[#ff5625] via-[#ff7d4d] to-[#ff5625]"></div>
+          <div class="p-7 sm:p-8">
+            <div class="mb-6 flex items-center justify-between">
+              <div>
+                <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Edit Item</h4>
+                <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#8f98a8]">Update name, description, image, type and USD price</p>
+              </div>
+              <button class="rounded-lg border border-white/10 p-2 text-[#8f98a8] transition-colors hover:border-white/30 hover:text-[#f5f7ff]" @click="closeEditModal">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <form class="space-y-5" @submit.prevent="saveEditedItem">
+              <div>
+                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Name</label>
+                <input
+                  v-model="editItemName"
+                  class="modal-input"
+                  placeholder="Example: Spicy Miso"
+                  type="text"
+                >
+              </div>
+
+              <div>
+                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Description</label>
+                <textarea
+                  v-model="editItemDescription"
+                  class="modal-input min-h-[90px] resize-y"
+                  placeholder="Short description of the item"
+                ></textarea>
+              </div>
+
+              <div>
+                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Image URL</label>
+                <input
+                  v-model="editItemImage"
+                  class="modal-input"
+                  placeholder="https://..."
+                  type="url"
+                >
+              </div>
+
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Type</label>
+                  <div class="modal-select-wrap">
+                    <select v-model="editItemCategory" class="modal-select">
+                      <option v-for="category in categoryOptions" :key="category" :value="category">{{ category }}</option>
+                    </select>
+                    <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#9fa8b8]">expand_more</span>
+                  </div>
+                </div>
+                <div>
+                  <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Price (USD)</label>
+                  <div class="relative">
+                    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7d4d]">$</span>
+                    <input
+                      v-model.number="editItemPriceUsd"
+                      class="modal-input no-number-spin pl-9 text-right"
+                      min="0.01"
+                      placeholder="12.99"
+                      step="0.01"
+                      type="number"
+                    >
+                  </div>
+                </div>
+              </div>
+
+              <p v-if="editModalError" class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">{{ editModalError }}</p>
+
+              <div class="flex justify-end gap-3 pt-3">
+                <button
+                  class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                  type="button"
+                  @click="closeEditModal"
+                >
+                  Cancel
+                </button>
+                <button
+                  class="rounded-lg bg-gradient-to-r from-[#ff5625] to-[#ff7d4d] px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(255,86,37,0.4)] transition-transform hover:scale-[1.02] active:scale-95"
+                  type="submit"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="isDeleteModalOpen"
+        class="fixed inset-0 z-[82] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.16),rgba(0,0,0,0.9)_58%)] p-6 backdrop-blur-md"
+        @click.self="closeDeleteModal"
+      >
+        <div class="w-full max-w-lg overflow-hidden rounded-2xl border border-red-400/20 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
+          <div class="h-1 w-full bg-gradient-to-r from-red-500 via-red-400 to-red-500"></div>
+          <div class="p-7 sm:p-8">
+            <div class="mb-5 flex items-start gap-4">
+              <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-red-400/35 bg-red-500/10 text-red-300">
+                <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+              </div>
+              <div class="flex-1">
+                <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Confirm Delete</h4>
+                <p class="mt-1 text-sm text-[#b8c0cf]">
+                  Are you sure you want to delete
+                  <span class="font-bold text-red-300">"{{ deletingItemName }}"</span>?
+                  This action cannot be undone.
+                </p>
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+              <button
+                class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                type="button"
+                @click="closeDeleteModal"
+              >
+                Cancel
+              </button>
+              <button
+                class="rounded-lg bg-gradient-to-r from-red-600 to-red-500 px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(220,38,38,0.35)] transition-transform hover:scale-[1.02] active:scale-95"
+                type="button"
+                @click="confirmDeleteItem"
+              >
+                Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </main>
     </div>
   </div>
@@ -391,6 +832,77 @@ function exitAdmin() {
 .monolith-header {
   font-family: 'Manrope', sans-serif;
   letter-spacing: -0.02em;
+}
+
+.modal-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(13, 16, 24, 0.95);
+  color: #f5f7ff;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.modal-input::placeholder {
+  color: rgba(160, 169, 184, 0.75);
+}
+
+.modal-input:focus {
+  border-color: rgba(255, 125, 77, 0.9);
+  background: rgba(10, 13, 20, 0.98);
+  box-shadow: 0 0 0 3px rgba(255, 86, 37, 0.18);
+  outline: none;
+}
+
+.modal-select-wrap {
+  position: relative;
+}
+
+.modal-select {
+  width: 100%;
+  appearance: none;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(13, 16, 24, 0.95);
+  color: #f5f7ff;
+  padding: 0.7rem 2.4rem 0.7rem 0.85rem;
+  font-size: 0.92rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.modal-select:focus {
+  border-color: rgba(255, 125, 77, 0.9);
+  background: rgba(10, 13, 20, 0.98);
+  box-shadow: 0 0 0 3px rgba(255, 86, 37, 0.18);
+  outline: none;
+}
+
+.modal-select option {
+  background-color: #0e131d;
+  color: #f5f7ff;
+}
+
+.no-number-spin::-webkit-outer-spin-button,
+.no-number-spin::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-number-spin[type='number'] {
+  -moz-appearance: textfield;
+}
+
+.success-alert-enter-active,
+.success-alert-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.success-alert-enter-from,
+.success-alert-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
 }
 
 :global(body) {
