@@ -8,22 +8,62 @@ import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } f
 const router = useRouter()
 const store = useStore()
 const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
+const ADMIN_ACTION_LOGS_STORAGE_KEY = 'ramen_admin_action_logs'
 
 type InventoryStatus = 'Available' | 'Depleted'
+type ActionLogTone = 'success' | 'neutral' | 'alert'
+type ActionLogKind = 'create' | 'update' | 'delete' | 'system'
 
 type AdminInventoryItem = UserCatalogItem & {
   status: InventoryStatus
 }
 
+type AdminActionLog = {
+  id: string
+  message: string
+  meta: string
+  tone: ActionLogTone
+  kind: ActionLogKind
+}
+
+type CategoryFilterOption = 'All' | CatalogCategory
+
 const menuItems = ref<AdminInventoryItem[]>(defaultUserCatalogItems.map(toAdminInventoryItem))
 const categoryOptions: CatalogCategory[] = ['Ramen', 'Drinks', 'Sides']
-const totalItems = computed(() => menuItems.value.length)
+const searchQuery = ref('')
+const selectedCategoryFilter = ref<CategoryFilterOption>('All')
+const filteredItems = computed(() => {
+  const normalizedQuery = searchQuery.value.trim().toLowerCase()
+
+  return menuItems.value.filter((item) => {
+    const matchesCategory = selectedCategoryFilter.value === 'All' || item.category === selectedCategoryFilter.value
+    if (!matchesCategory) return false
+    if (!normalizedQuery) return true
+
+    const searchableText = `${item.name} ${item.description} ${item.category}`.toLowerCase()
+    return searchableText.includes(normalizedQuery)
+  })
+})
+const totalItems = computed(() => filteredItems.value.length)
+const totalCatalogItems = computed(() => menuItems.value.length)
+const averageFilteredPrice = computed(() => {
+  const numericPrices = filteredItems.value
+    .map((item) => parseUsdPriceToNumber(item.price))
+    .filter((price): price is number => price !== null)
+
+  if (numericPrices.length === 0) return 0
+
+  const total = numericPrices.reduce((sum, price) => sum + price, 0)
+  return total / numericPrices.length
+})
+const averageFilteredPriceLabel = computed(() => `$${averageFilteredPrice.value.toFixed(2)}`)
 const pageSizeOptions = [5, 10, 20, 30] as const
 const itemsPerPage = ref<number>(5)
 const currentPage = ref(1)
 const isCreateModalOpen = ref(false)
 const isEditModalOpen = ref(false)
 const isDeleteModalOpen = ref(false)
+const isLogsModalOpen = ref(false)
 const newItemName = ref('')
 const newItemDescription = ref('')
 const newItemImage = ref('')
@@ -42,10 +82,34 @@ const deletingItemName = ref('')
 const successAlertMessage = ref('')
 const isSuccessAlertVisible = ref(false)
 let successAlertTimeout: ReturnType<typeof setTimeout> | null = null
+const actionLogs = ref<AdminActionLog[]>([
+  {
+    id: 'log-seed-added',
+    message: 'Item Added: "Summer Yuzu Chill"',
+    meta: '09:42 AM • Yamamoto',
+    tone: 'success',
+    kind: 'create',
+  },
+  {
+    id: 'log-seed-sync',
+    message: 'Inventory Sync Complete',
+    meta: '08:00 AM • Automated',
+    tone: 'neutral',
+    kind: 'system',
+  },
+  {
+    id: 'log-seed-depleted',
+    message: 'Stock Depleted: Wagyu Gyoza',
+    meta: '07:22 AM • System',
+    tone: 'alert',
+    kind: 'delete',
+  },
+])
+const recentActionLogs = computed(() => actionLogs.value.slice(0, 3))
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage.value)))
 const paginatedItems = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value
-  return menuItems.value.slice(start, start + itemsPerPage.value)
+  return filteredItems.value.slice(start, start + itemsPerPage.value)
 })
 const showingFrom = computed(() => {
   if (totalItems.value === 0) return 0
@@ -56,6 +120,14 @@ const visiblePageNumbers = computed(() => Array.from({ length: totalPages.value 
 
 function isValidCategory(value: unknown): value is CatalogCategory {
   return value === 'Ramen' || value === 'Drinks' || value === 'Sides'
+}
+
+function isValidActionLogTone(value: unknown): value is ActionLogTone {
+  return value === 'success' || value === 'neutral' || value === 'alert'
+}
+
+function isValidActionLogKind(value: unknown): value is ActionLogKind {
+  return value === 'create' || value === 'update' || value === 'delete' || value === 'system'
 }
 
 function parseUserItems(raw: string | null): UserCatalogItem[] | null {
@@ -82,6 +154,29 @@ function parseUserItems(raw: string | null): UserCatalogItem[] | null {
   }
 }
 
+function parseStoredActionLogs(raw: string | null): AdminActionLog[] | null {
+  if (!raw) return null
+
+  try {
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+
+    const normalized = parsed.filter((log): log is AdminActionLog => {
+      return (
+        typeof log?.id === 'string' &&
+        typeof log?.message === 'string' &&
+        typeof log?.meta === 'string' &&
+        isValidActionLogTone(log?.tone) &&
+        isValidActionLogKind(log?.kind)
+      )
+    })
+
+    return normalized.length ? normalized : null
+  } catch {
+    return null
+  }
+}
+
 function toAdminInventoryItem(item: UserCatalogItem): AdminInventoryItem {
   return {
     ...item,
@@ -98,9 +193,55 @@ function setItemsPerPage(size: number): void {
   currentPage.value = 1
 }
 
+function setCategoryFilter(filter: CategoryFilterOption): void {
+  selectedCategoryFilter.value = filter
+}
+
 function persistUserMenuItems(): void {
   const itemsToStore: UserCatalogItem[] = menuItems.value.map(({ status: _status, ...item }) => item)
   localStorage.setItem(USER_MENU_STORAGE_KEY, JSON.stringify(itemsToStore))
+}
+
+function persistActionLogs(): void {
+  localStorage.setItem(ADMIN_ACTION_LOGS_STORAGE_KEY, JSON.stringify(actionLogs.value))
+}
+
+function formatActionLogTime(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date)
+}
+
+function prependActionLog(message: string, tone: ActionLogTone, kind: ActionLogKind, actor: string): void {
+  const now = new Date()
+  actionLogs.value = [
+    {
+      id: `log-${now.getTime().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
+      message,
+      meta: `${formatActionLogTime(now)} • ${actor}`,
+      tone,
+      kind,
+    },
+    ...actionLogs.value,
+  ]
+  persistActionLogs()
+}
+
+function getActionLogIcon(kind: ActionLogKind): string {
+  if (kind === 'create') return 'add_circle'
+  if (kind === 'update') return 'edit'
+  if (kind === 'delete') return 'delete'
+  return 'sync'
+}
+
+function openLogsModal(): void {
+  isLogsModalOpen.value = true
+}
+
+function closeLogsModal(): void {
+  isLogsModalOpen.value = false
 }
 
 function resetNewItemForm(): void {
@@ -157,6 +298,7 @@ function addNewItem(): void {
 
   menuItems.value = [newItem, ...menuItems.value]
   persistUserMenuItems()
+  prependActionLog(`Item Added: "${name}"`, 'success', 'create', 'Yamamoto')
   currentPage.value = 1
   showSuccessAlert(`"${name}" was created successfully.`)
   closeCreateModal()
@@ -213,6 +355,7 @@ function confirmDeleteItem(): void {
   const removedName = deletingItemName.value || 'Item'
   menuItems.value = menuItems.value.filter((item) => item.id !== id)
   persistUserMenuItems()
+  prependActionLog(`Item Removed: "${removedName}"`, 'alert', 'delete', 'Yamamoto')
   showSuccessAlert(`"${removedName}" was deleted successfully.`)
   closeDeleteModal()
 }
@@ -242,6 +385,7 @@ function saveEditedItem(): void {
   })
 
   persistUserMenuItems()
+  prependActionLog(`Item Updated: "${name}"`, 'neutral', 'update', 'Yamamoto')
   showSuccessAlert(`"${name}" was updated successfully.`)
   closeEditModal()
 }
@@ -278,6 +422,11 @@ onMounted(() => {
   if (storedItems) {
     menuItems.value = storedItems.map(toAdminInventoryItem)
   }
+
+  const storedLogs = parseStoredActionLogs(localStorage.getItem(ADMIN_ACTION_LOGS_STORAGE_KEY))
+  if (storedLogs) {
+    actionLogs.value = storedLogs
+  }
 })
 
 onBeforeUnmount(() => {
@@ -291,6 +440,10 @@ watch(totalPages, (pages) => {
   if (currentPage.value > pages) {
     currentPage.value = pages
   }
+})
+
+watch([searchQuery, selectedCategoryFilter], () => {
+  currentPage.value = 1
 })
 
 function exitAdmin() {
@@ -312,19 +465,19 @@ function exitAdmin() {
           <span class="material-symbols-outlined text-[20px]">dashboard</span>
           <span class="font-label text-sm font-medium tracking-tight">Dashboard</span>
         </a>
-        <a class="group flex items-center gap-3 rounded border-r-2 border-primary-container bg-surface-container-high px-4 py-3 text-primary-container" href="#">
+        <router-link class="group flex items-center gap-3 rounded border-r-2 border-primary-container bg-surface-container-high px-4 py-3 text-primary-container" to="/admin">
           <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
           <span class="font-label text-sm font-bold tracking-tight">Menu Items</span>
-        </a>
+        </router-link>
         <a class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" href="#">
           <span class="material-symbols-outlined text-[20px]">receipt_long</span>
           <span class="font-label text-sm font-medium tracking-tight">Orders</span>
           <span class="ml-auto rounded bg-primary-container/10 px-1.5 py-0.5 text-[10px] font-bold text-primary-container">12</span>
         </a>
-        <a class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" href="#">
-          <span class="material-symbols-outlined text-[20px]">settings_suggest</span>
-          <span class="font-label text-sm font-medium tracking-tight">Settings</span>
-        </a>
+        <router-link class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" to="/admin/stock">
+          <span class="material-symbols-outlined text-[20px]">inventory_2</span>
+          <span class="font-label text-sm font-medium tracking-tight">Stock</span>
+        </router-link>
       </nav>
       <div class="mt-auto p-4">
         <div class="flex items-center gap-3 rounded-lg bg-surface-container p-4">
@@ -380,12 +533,12 @@ function exitAdmin() {
       </header>
 
       <div class="flex-1 space-y-12 overflow-y-auto p-10">
-        <section class="grid grid-cols-4 gap-6">
+        <section class="grid grid-cols-5 gap-6">
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
             <p class="mb-2 text-[10px] uppercase tracking-[0.2em] text-outline">Total Items</p>
             <div class="flex items-end justify-between">
               <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">{{ totalItems }}</span>
-              <span class="text-xs font-bold text-primary-container">catalog loaded</span>
+              <span class="text-xs font-bold text-primary-container">{{ totalCatalogItems }} in catalog</span>
             </div>
           </div>
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
@@ -395,6 +548,13 @@ function exitAdmin() {
               <div class="mb-2 h-1 w-12 overflow-hidden rounded-full bg-primary-container/20">
                 <div class="h-full w-[60%] bg-primary-container"></div>
               </div>
+            </div>
+          </div>
+          <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
+            <p class="mb-2 text-[10px] uppercase tracking-[0.2em] text-outline">Average Price</p>
+            <div class="flex items-end justify-between">
+              <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">{{ averageFilteredPriceLabel }}</span>
+              <span class="text-[10px] font-bold uppercase tracking-[0.12em] text-outline">filtered</span>
             </div>
           </div>
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
@@ -416,14 +576,34 @@ function exitAdmin() {
         <section class="space-y-6">
           <div class="flex items-center justify-between">
             <h3 class="monolith-header text-lg font-extrabold uppercase tracking-tighter text-on-surface">Active Inventory</h3>
-            <div class="flex gap-4">
-              <div class="relative">
-                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-sm text-outline">search</span>
-                <input class="w-64 rounded-sm border-none bg-surface-container-low py-2 pl-10 pr-4 text-[10px] uppercase tracking-widest text-on-surface placeholder-outline/50 focus:ring-1 focus:ring-primary-container" placeholder="FILTER BY NAME..." type="text">
+            <div class="flex flex-wrap items-center justify-end gap-3">
+              <div class="search-shell">
+                <span class="material-symbols-outlined search-icon">search</span>
+                <input
+                  v-model="searchQuery"
+                  class="search-input"
+                  placeholder="Search items..."
+                  type="text"
+                >
               </div>
-              <button class="bg-surface-container-high px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-outline transition-colors hover:text-on-surface">
-                Category: All
-              </button>
+              <div class="flex items-center gap-2">
+                <button
+                  class="filter-pill"
+                  :class="selectedCategoryFilter === 'All' ? 'filter-pill-active' : ''"
+                  @click="setCategoryFilter('All')"
+                >
+                  All
+                </button>
+                <button
+                  v-for="category in categoryOptions"
+                  :key="category"
+                  class="filter-pill"
+                  :class="selectedCategoryFilter === category ? 'filter-pill-active' : ''"
+                  @click="setCategoryFilter(category)"
+                >
+                  {{ category }}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -475,6 +655,11 @@ function exitAdmin() {
                 <button class="p-2 text-outline transition-colors hover:text-white" @click="openEditModal(item)"><span class="material-symbols-outlined text-lg">edit</span></button>
                 <button class="p-2 text-outline transition-colors hover:text-error" @click="openDeleteModal(item)"><span class="material-symbols-outlined text-lg">delete</span></button>
               </div>
+            </div>
+
+            <div v-if="paginatedItems.length === 0" class="border-b border-outline-variant/5 bg-surface-container-low px-6 py-14 text-center">
+              <p class="monolith-header text-base font-bold text-[#e8edf9]">No matching items</p>
+              <p class="mt-2 text-xs uppercase tracking-[0.14em] text-[#8f98a8]">Try changing the search text or category filter</p>
             </div>
           </div>
 
@@ -550,29 +735,24 @@ function exitAdmin() {
           <div class="rounded-lg border border-outline-variant/10 bg-surface-container-lowest p-6">
             <h4 class="monolith-header mb-6 text-[10px] font-black uppercase tracking-widest text-outline">Security &amp; Action Log</h4>
             <div class="space-y-4">
-              <div class="flex items-start gap-3">
-                <div class="mt-1.5 h-1.5 w-1.5 rounded-full bg-primary-container"></div>
-                <div>
-                  <p class="text-[11px] font-bold text-on-surface">Item Added: "Summer Yuzu Chill"</p>
-                  <p class="text-[9px] uppercase tracking-wider text-outline">09:42 AM • Yamamoto</p>
+              <div v-for="log in recentActionLogs" :key="log.id" class="flex items-start gap-3">
+                <div
+                  class="mt-0.5 flex h-5 w-5 items-center justify-center rounded-sm border"
+                  :class="log.tone === 'success'
+                    ? 'border-primary-container/40 text-primary-container'
+                    : log.tone === 'alert'
+                      ? 'border-error/40 text-error'
+                      : 'border-outline/30 text-outline'"
+                >
+                  <span class="material-symbols-outlined text-[13px]">{{ getActionLogIcon(log.kind) }}</span>
                 </div>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="mt-1.5 h-1.5 w-1.5 rounded-full bg-outline/30"></div>
                 <div>
-                  <p class="text-[11px] font-bold text-on-surface">Inventory Sync Complete</p>
-                  <p class="text-[9px] uppercase tracking-wider text-outline">08:00 AM • Automated</p>
-                </div>
-              </div>
-              <div class="flex items-start gap-3">
-                <div class="mt-1.5 h-1.5 w-1.5 rounded-full bg-error shadow-[0_0_8px_rgba(239,68,68,0.4)]"></div>
-                <div>
-                  <p class="text-[11px] font-bold text-on-surface">Stock Depleted: Wagyu Gyoza</p>
-                  <p class="text-[9px] uppercase tracking-wider text-outline">07:22 AM • System</p>
+                  <p class="text-[11px] font-bold text-on-surface">{{ log.message }}</p>
+                  <p class="text-[9px] uppercase tracking-wider text-outline">{{ log.meta }}</p>
                 </div>
               </div>
             </div>
-            <button class="mt-6 w-full border border-outline-variant/20 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-outline transition-all hover:bg-surface-container-high hover:text-on-surface">View All Logs</button>
+            <button class="mt-6 w-full border border-outline-variant/20 py-2 text-[9px] font-black uppercase tracking-[0.2em] text-outline transition-all hover:bg-surface-container-high hover:text-on-surface" @click="openLogsModal">View All Logs</button>
           </div>
         </section>
       </div>
@@ -588,25 +768,25 @@ function exitAdmin() {
 
       <div
         v-if="isCreateModalOpen"
-        class="fixed inset-0 z-[80] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(255,86,37,0.18),rgba(0,0,0,0.88)_55%)] p-6 backdrop-blur-md"
+        class="modal-overlay"
         @click.self="closeCreateModal"
       >
-        <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
-          <div class="h-1 w-full bg-gradient-to-r from-[#ff5625] via-[#ff7d4d] to-[#ff5625]"></div>
+        <div class="modal-panel w-full max-w-2xl overflow-hidden">
+          <div class="modal-top-accent"></div>
           <div class="p-7 sm:p-8">
           <div class="mb-6 flex items-center justify-between">
             <div>
-              <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Add New Item</h4>
-              <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#8f98a8]">Name, image, type and price in USD</p>
+              <h4 class="modal-title monolith-header text-xl font-extrabold uppercase tracking-tight">Add New Item</h4>
+              <p class="modal-subtitle mt-1 text-[10px] uppercase tracking-[0.18em]">Name, image, type and price in USD</p>
             </div>
-            <button class="rounded-lg border border-white/10 p-2 text-[#8f98a8] transition-colors hover:border-white/30 hover:text-[#f5f7ff]" @click="closeCreateModal">
+            <button class="modal-icon-btn" @click="closeCreateModal">
               <span class="material-symbols-outlined">close</span>
             </button>
           </div>
 
           <form class="space-y-5" @submit.prevent="addNewItem">
             <div>
-              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Name</label>
+              <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Name</label>
               <input
                 v-model="newItemName"
                 class="modal-input"
@@ -616,7 +796,7 @@ function exitAdmin() {
             </div>
 
             <div>
-              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Description</label>
+              <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Description</label>
               <textarea
                 v-model="newItemDescription"
                 class="modal-input min-h-[90px] resize-y"
@@ -625,7 +805,7 @@ function exitAdmin() {
             </div>
 
             <div>
-              <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Image URL</label>
+              <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Image URL</label>
               <input
                 v-model="newItemImage"
                 class="modal-input"
@@ -636,18 +816,18 @@ function exitAdmin() {
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Type</label>
+                <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Type</label>
                 <div class="modal-select-wrap">
                   <select v-model="newItemCategory" class="modal-select">
                     <option v-for="category in categoryOptions" :key="category" :value="category">{{ category }}</option>
                   </select>
-                  <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#9fa8b8]">expand_more</span>
+                  <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-white/60">expand_more</span>
                 </div>
               </div>
               <div>
-                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Price (USD)</label>
+                <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Price (USD)</label>
                 <div class="relative">
-                  <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7d4d]">$</span>
+                  <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7a3a]">$</span>
                   <input
                     v-model.number="newItemPriceUsd"
                     class="modal-input no-number-spin pl-9 text-right"
@@ -660,18 +840,18 @@ function exitAdmin() {
               </div>
             </div>
 
-            <p v-if="modalError" class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">{{ modalError }}</p>
+            <p v-if="modalError" class="modal-error px-3 py-2 text-xs font-semibold">{{ modalError }}</p>
 
             <div class="flex justify-end gap-3 pt-3">
               <button
-                class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                class="modal-btn-secondary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em]"
                 type="button"
                 @click="closeCreateModal"
               >
                 Cancel
               </button>
               <button
-                class="rounded-lg bg-gradient-to-r from-[#ff5625] to-[#ff7d4d] px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(255,86,37,0.4)] transition-transform hover:scale-[1.02] active:scale-95"
+                class="modal-btn-primary px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em]"
                 type="submit"
               >
                 Save Item
@@ -684,25 +864,25 @@ function exitAdmin() {
 
       <div
         v-if="isEditModalOpen"
-        class="fixed inset-0 z-[80] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(255,86,37,0.18),rgba(0,0,0,0.88)_55%)] p-6 backdrop-blur-md"
+        class="modal-overlay"
         @click.self="closeEditModal"
       >
-        <div class="w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
-          <div class="h-1 w-full bg-gradient-to-r from-[#ff5625] via-[#ff7d4d] to-[#ff5625]"></div>
+        <div class="modal-panel w-full max-w-2xl overflow-hidden">
+          <div class="modal-top-accent"></div>
           <div class="p-7 sm:p-8">
             <div class="mb-6 flex items-center justify-between">
               <div>
-                <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Edit Item</h4>
-                <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#8f98a8]">Update name, description, image, type and USD price</p>
+                <h4 class="modal-title monolith-header text-xl font-extrabold uppercase tracking-tight">Edit Item</h4>
+                <p class="modal-subtitle mt-1 text-[10px] uppercase tracking-[0.18em]">Update name, description, image, type and USD price</p>
               </div>
-              <button class="rounded-lg border border-white/10 p-2 text-[#8f98a8] transition-colors hover:border-white/30 hover:text-[#f5f7ff]" @click="closeEditModal">
+              <button class="modal-icon-btn" @click="closeEditModal">
                 <span class="material-symbols-outlined">close</span>
               </button>
             </div>
 
             <form class="space-y-5" @submit.prevent="saveEditedItem">
               <div>
-                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Name</label>
+                <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Name</label>
                 <input
                   v-model="editItemName"
                   class="modal-input"
@@ -712,7 +892,7 @@ function exitAdmin() {
               </div>
 
               <div>
-                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Description</label>
+                <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Description</label>
                 <textarea
                   v-model="editItemDescription"
                   class="modal-input min-h-[90px] resize-y"
@@ -721,7 +901,7 @@ function exitAdmin() {
               </div>
 
               <div>
-                <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Image URL</label>
+                <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Image URL</label>
                 <input
                   v-model="editItemImage"
                   class="modal-input"
@@ -732,18 +912,18 @@ function exitAdmin() {
 
               <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                  <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Type</label>
+                  <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Type</label>
                   <div class="modal-select-wrap">
                     <select v-model="editItemCategory" class="modal-select">
                       <option v-for="category in categoryOptions" :key="category" :value="category">{{ category }}</option>
                     </select>
-                    <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-[#9fa8b8]">expand_more</span>
+                    <span class="material-symbols-outlined pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[18px] text-white/60">expand_more</span>
                   </div>
                 </div>
                 <div>
-                  <label class="mb-2 block text-[10px] font-bold uppercase tracking-[0.16em] text-[#9fa8b8]">Price (USD)</label>
+                  <label class="modal-label mb-2 block text-[10px] font-bold uppercase tracking-[0.16em]">Price (USD)</label>
                   <div class="relative">
-                    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7d4d]">$</span>
+                    <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-[#ff7a3a]">$</span>
                     <input
                       v-model.number="editItemPriceUsd"
                       class="modal-input no-number-spin pl-9 text-right"
@@ -756,18 +936,18 @@ function exitAdmin() {
                 </div>
               </div>
 
-              <p v-if="editModalError" class="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-300">{{ editModalError }}</p>
+              <p v-if="editModalError" class="modal-error px-3 py-2 text-xs font-semibold">{{ editModalError }}</p>
 
               <div class="flex justify-end gap-3 pt-3">
                 <button
-                  class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                  class="modal-btn-secondary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em]"
                   type="button"
                   @click="closeEditModal"
                 >
                   Cancel
                 </button>
                 <button
-                  class="rounded-lg bg-gradient-to-r from-[#ff5625] to-[#ff7d4d] px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(255,86,37,0.4)] transition-transform hover:scale-[1.02] active:scale-95"
+                  class="modal-btn-primary px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em]"
                   type="submit"
                 >
                   Save Changes
@@ -780,21 +960,21 @@ function exitAdmin() {
 
       <div
         v-if="isDeleteModalOpen"
-        class="fixed inset-0 z-[82] flex items-center justify-center bg-[radial-gradient(circle_at_top,rgba(239,68,68,0.16),rgba(0,0,0,0.9)_58%)] p-6 backdrop-blur-md"
+        class="modal-overlay z-[82]"
         @click.self="closeDeleteModal"
       >
-        <div class="w-full max-w-lg overflow-hidden rounded-2xl border border-red-400/20 bg-[#101218] shadow-[0_24px_80px_rgba(0,0,0,0.65)]">
-          <div class="h-1 w-full bg-gradient-to-r from-red-500 via-red-400 to-red-500"></div>
+        <div class="modal-panel w-full max-w-lg overflow-hidden">
+          <div class="modal-top-accent"></div>
           <div class="p-7 sm:p-8">
             <div class="mb-5 flex items-start gap-4">
-              <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border border-red-400/35 bg-red-500/10 text-red-300">
+              <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-sm border border-[#ff7a3a]/45 bg-transparent text-[#ff7a3a]">
                 <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
               </div>
               <div class="flex-1">
-                <h4 class="monolith-header text-xl font-extrabold uppercase tracking-tight text-[#f5f7ff]">Confirm Delete</h4>
-                <p class="mt-1 text-sm text-[#b8c0cf]">
+                <h4 class="modal-title monolith-header text-xl font-extrabold uppercase tracking-tight">Confirm Delete</h4>
+                <p class="modal-subtitle mt-1 text-sm">
                   Are you sure you want to delete
-                  <span class="font-bold text-red-300">"{{ deletingItemName }}"</span>?
+                  <span class="font-bold text-[#ffb08a]">"{{ deletingItemName }}"</span>?
                   This action cannot be undone.
                 </p>
               </div>
@@ -802,18 +982,74 @@ function exitAdmin() {
 
             <div class="flex justify-end gap-3 pt-2">
               <button
-                class="rounded-lg border border-white/15 px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em] text-[#adb4c1] transition-colors hover:border-white/35 hover:text-white"
+                class="modal-btn-secondary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em]"
                 type="button"
                 @click="closeDeleteModal"
               >
                 Cancel
               </button>
               <button
-                class="rounded-lg bg-gradient-to-r from-red-600 to-red-500 px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-[0_10px_28px_rgba(220,38,38,0.35)] transition-transform hover:scale-[1.02] active:scale-95"
+                class="modal-btn-primary px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em]"
                 type="button"
                 @click="confirmDeleteItem"
               >
                 Delete Item
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        v-if="isLogsModalOpen"
+        class="modal-overlay z-[83]"
+        @click.self="closeLogsModal"
+      >
+        <div class="modal-panel w-full max-w-2xl overflow-hidden">
+          <div class="modal-top-accent"></div>
+          <div class="p-7 sm:p-8">
+            <div class="mb-5 flex items-center justify-between">
+              <div>
+                <h4 class="modal-title monolith-header text-xl font-extrabold uppercase tracking-tight">All Logs</h4>
+                <p class="modal-subtitle mt-1 text-[10px] uppercase tracking-[0.18em]">Security and action history</p>
+              </div>
+              <button class="modal-icon-btn" @click="closeLogsModal">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </div>
+
+            <div class="max-h-[60vh] space-y-3 overflow-y-auto pr-1">
+              <div
+                v-for="log in actionLogs"
+                :key="log.id"
+                class="rounded-sm border border-white/10 bg-transparent px-4 py-3"
+              >
+                <div class="flex items-start gap-3">
+                  <div
+                    class="mt-0.5 flex h-5 w-5 items-center justify-center rounded-sm border"
+                    :class="log.tone === 'success'
+                      ? 'border-primary-container/40 text-primary-container'
+                      : log.tone === 'alert'
+                        ? 'border-error/40 text-error'
+                        : 'border-outline/30 text-outline'"
+                  >
+                    <span class="material-symbols-outlined text-[13px]">{{ getActionLogIcon(log.kind) }}</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-[12px] font-bold text-on-surface">{{ log.message }}</p>
+                    <p class="mt-1 text-[9px] uppercase tracking-[0.14em] text-outline">{{ log.meta }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-5">
+              <button
+                class="modal-btn-secondary px-4 py-2 text-[10px] font-bold uppercase tracking-[0.15em]"
+                type="button"
+                @click="closeLogsModal"
+              >
+                Close
               </button>
             </div>
           </div>
@@ -834,25 +1070,74 @@ function exitAdmin() {
   letter-spacing: -0.02em;
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(3, 3, 3, 0.78);
+  backdrop-filter: blur(4px);
+}
+
+.modal-panel {
+  border-radius: 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0b0b0b;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.65);
+}
+
+.modal-top-accent {
+  height: 1px;
+  width: 100%;
+  background: rgba(255, 122, 58, 0.9);
+}
+
+.modal-title {
+  color: #f4f4f4;
+}
+
+.modal-subtitle {
+  color: rgba(232, 232, 232, 0.62);
+}
+
+.modal-label {
+  color: rgba(236, 236, 236, 0.78);
+}
+
+.modal-icon-btn {
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(240, 240, 240, 0.62);
+  padding: 0.45rem;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+.modal-icon-btn:hover {
+  color: #fff;
+  border-color: rgba(255, 122, 58, 0.8);
+}
+
 .modal-input {
   width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(13, 16, 24, 0.95);
-  color: #f5f7ff;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: #f4f4f4;
   padding: 0.7rem 0.85rem;
-  font-size: 0.92rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  font-size: 0.88rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .modal-input::placeholder {
-  color: rgba(160, 169, 184, 0.75);
+  color: rgba(220, 220, 220, 0.44);
 }
 
 .modal-input:focus {
-  border-color: rgba(255, 125, 77, 0.9);
-  background: rgba(10, 13, 20, 0.98);
-  box-shadow: 0 0 0 3px rgba(255, 86, 37, 0.18);
+  border-color: rgba(255, 122, 58, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 122, 58, 0.35);
   outline: none;
 }
 
@@ -863,25 +1148,121 @@ function exitAdmin() {
 .modal-select {
   width: 100%;
   appearance: none;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(13, 16, 24, 0.95);
-  color: #f5f7ff;
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: #f4f4f4;
   padding: 0.7rem 2.4rem 0.7rem 0.85rem;
-  font-size: 0.92rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  font-size: 0.88rem;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .modal-select:focus {
-  border-color: rgba(255, 125, 77, 0.9);
-  background: rgba(10, 13, 20, 0.98);
-  box-shadow: 0 0 0 3px rgba(255, 86, 37, 0.18);
+  border-color: rgba(255, 122, 58, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 122, 58, 0.35);
   outline: none;
 }
 
 .modal-select option {
-  background-color: #0e131d;
-  color: #f5f7ff;
+  background-color: #0b0b0b;
+  color: #f4f4f4;
+}
+
+.modal-error {
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 122, 58, 0.45);
+  background: rgba(255, 122, 58, 0.08);
+  color: #ffd3bf;
+}
+
+.modal-btn-secondary {
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: rgba(240, 240, 240, 0.8);
+  background: transparent;
+  transition: color 0.16s ease, border-color 0.16s ease;
+}
+
+.modal-btn-secondary:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.52);
+}
+
+.modal-btn-primary {
+  border-radius: 0.25rem;
+  border: 1px solid rgba(255, 122, 58, 0.85);
+  color: #fff;
+  background: rgba(255, 122, 58, 0.14);
+  transition: transform 0.16s ease, background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.modal-btn-primary:hover {
+  background: rgba(255, 122, 58, 0.2);
+  border-color: rgba(255, 122, 58, 1);
+}
+
+.search-shell {
+  position: relative;
+  width: 22rem;
+  max-width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: rgba(245, 245, 245, 0.62);
+}
+
+.search-input {
+  width: 100%;
+  border-radius: 0.55rem;
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  background: transparent;
+  color: #f2f2f2;
+  padding: 0.66rem 0.9rem 0.66rem 2.45rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.search-input::placeholder {
+  color: rgba(245, 245, 245, 0.68);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #ffffff;
+}
+
+.filter-pill {
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  color: rgba(245, 245, 245, 0.75);
+  background: transparent;
+  padding: 0.44rem 0.72rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  transition: color 0.16s ease, border-color 0.16s ease, background-color 0.16s ease;
+}
+
+.filter-pill:hover {
+  color: rgba(255, 255, 255, 0.94);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.filter-pill-active {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.85);
+  background: transparent;
 }
 
 .no-number-spin::-webkit-outer-spin-button,

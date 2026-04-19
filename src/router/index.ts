@@ -6,6 +6,7 @@ import CardapioView from '@/views/CardapioView.vue'
 import LoginView from '@/views/LoginView.vue'
 import AdminView from '@/views/AdminView.vue'
 import CheckoutView from '@/views/CheckoutView.vue'
+import InventoryView from '@/views/InventoryView.vue'
 import store from '@/store'
 
 const router = createRouter({
@@ -16,7 +17,8 @@ const router = createRouter({
     { path: '/cardapio', name: 'cardapio', component: CardapioView },
     { path: '/checkout', name: 'checkout', component: CheckoutView },
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/admin', name: 'admin', component: AdminView }
+    { path: '/admin', name: 'admin', component: AdminView },
+    { path: '/admin/stock', name: 'admin-stock', component: InventoryView },
   ],
   scrollBehavior() {
     return { top: 0 }
@@ -25,8 +27,9 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const isAdminAuthenticated = store.getters['adminAuth/isAuthenticated'] as boolean
+  const isAdminRoute = to.path.startsWith('/admin')
 
-  if (to.path === '/admin' && !isAdminAuthenticated) {
+  if (isAdminRoute && !isAdminAuthenticated) {
     return { path: '/login', query: { redirect: '/admin' } }
   }
 
