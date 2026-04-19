@@ -1,6 +1,7 @@
 import type { ActionContext } from 'vuex'
 
 import type { CatalogCategory } from '@/data/userMenuItems'
+import { getItemStock } from '@/utils/inventory'
 
 const CART_STORAGE_KEY = 'ramen_cart_items'
 
@@ -65,7 +66,7 @@ function getInitialCartState(): CartItem[] {
     return []
   }
 
-  return parseCartItems(localStorage.getItem(CART_STORAGE_KEY))
+  return normalizeCartItemsByStock(parseCartItems(localStorage.getItem(CART_STORAGE_KEY)))
 }
 
 function persistCartState(items: CartItem[]): void {
@@ -74,6 +75,19 @@ function persistCartState(items: CartItem[]): void {
   }
 
   localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items))
+}
+
+function normalizeCartItemsByStock(items: CartItem[]): CartItem[] {
+  return items
+    .map((item) => {
+      const stock = getItemStock(item.id)
+      const quantity = Math.min(item.quantity, stock, 99)
+      return {
+        ...item,
+        quantity,
+      }
+    })
+    .filter((item) => item.quantity > 0)
 }
 
 type CartActionContext = ActionContext<CartState, unknown>
@@ -137,8 +151,19 @@ const cartModule = {
 
   actions: {
     addItemToCart({ commit, state }: CartActionContext, payload: AddItemPayload) {
-      commit('addItem', payload)
+      const requestedQuantity = payload.quantity ?? 1
+      const existingQuantity = state.items.find((item) => item.id === payload.item.id)?.quantity ?? 0
+      const itemStock = getItemStock(payload.item.id)
+      const remainingStock = itemStock - existingQuantity
+
+      if (remainingStock <= 0) return false
+
+      commit('addItem', {
+        ...payload,
+        quantity: Math.max(1, Math.min(requestedQuantity, remainingStock, 99)),
+      })
       persistCartState(state.items)
+      return true
     },
 
     removeFromCart({ commit, state }: CartActionContext, id: string) {
@@ -147,7 +172,12 @@ const cartModule = {
     },
 
     updateCartItemQuantity({ commit, state }: CartActionContext, payload: UpdateQuantityPayload) {
-      commit('updateItemQuantity', payload)
+      const itemStock = getItemStock(payload.id)
+      const nextQuantity = Math.max(0, Math.min(payload.quantity, itemStock, 99))
+      commit('updateItemQuantity', {
+        ...payload,
+        quantity: nextQuantity,
+      })
       persistCartState(state.items)
     },
 
@@ -157,7 +187,15 @@ const cartModule = {
     },
 
     restoreCart({ commit }: CartActionContext) {
-      commit('setItems', getInitialCartState())
+      const restoredItems = getInitialCartState()
+      commit('setItems', restoredItems)
+      persistCartState(restoredItems)
+    },
+
+    syncWithInventory({ commit, state }: CartActionContext) {
+      const normalizedItems = normalizeCartItemsByStock(state.items)
+      commit('setItems', normalizedItems)
+      persistCartState(normalizedItems)
     },
   },
 }

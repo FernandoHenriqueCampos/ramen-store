@@ -6,6 +6,7 @@ import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppTo
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
+import { getItemStock } from '@/utils/inventory'
 
 const store = useStore<RootState>()
 const alerts = ref<UiAlert[]>([])
@@ -28,7 +29,12 @@ function showAlert(type: AlertType, title: string, message: string): void {
   alertTimeouts.set(id, timeout)
 }
 
-function addRamenToCart(itemId: string): void {
+async function addRamenToCart(itemId: string): Promise<void> {
+  if (getItemStock(itemId) <= 0) {
+    showAlert('error', 'Out of stock', 'This item is currently unavailable.')
+    return
+  }
+
   const item = defaultUserCatalogItems.find((menuItem) => menuItem.id === itemId)
   if (!item) {
     showAlert('error', 'Unable to add', 'We could not find this ramen item.')
@@ -36,7 +42,7 @@ function addRamenToCart(itemId: string): void {
   }
 
   try {
-    store.dispatch('cart/addItemToCart', {
+    const didAdd = (await store.dispatch('cart/addItemToCart', {
       item: {
         id: item.id,
         name: item.name,
@@ -45,12 +51,21 @@ function addRamenToCart(itemId: string): void {
         image: item.image,
       },
       quantity: 1,
-    })
+    })) as boolean
+
+    if (!didAdd) {
+      showAlert('info', 'Stock limit reached', 'You already have the maximum available quantity in your cart.')
+      return
+    }
 
     showAlert('success', 'Added to cart', `${item.name} has been added to your cart.`)
   } catch {
     showAlert('error', 'Unable to add', 'We could not update your cart right now.')
   }
+}
+
+function isOutOfStock(itemId: string): boolean {
+  return getItemStock(itemId) <= 0
 }
 
 onBeforeUnmount(() => {
@@ -80,7 +95,7 @@ onBeforeUnmount(() => {
           <span class="font-label text-xs uppercase tracking-widest text-on-surface-variant opacity-50">Signature Bowls</span>
         </div>
         <div class="grid grid-cols-1 gap-6 md:grid-cols-12">
-          <div class="group relative overflow-hidden bg-surface-container-low md:col-span-8">
+          <div class="group relative overflow-hidden bg-surface-container-low md:col-span-8" :class="isOutOfStock('ramen-monolith-tonkotsu') ? 'opacity-45 saturate-0' : ''">
             <div class="aspect-[16/9] w-full overflow-hidden">
               <img alt="Signature Tonkotsu" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Close-up of premium tonkotsu ramen with creamy broth, soft-boiled egg, and seared pork belly on a dark ceramic background with moody lighting" src="../assets/images/menu-monolith-tonkotsu.png">
             </div>
@@ -97,6 +112,8 @@ onBeforeUnmount(() => {
                   <button
                     class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
                     type="button"
+                    :class="isOutOfStock('ramen-monolith-tonkotsu') ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/35 hover:bg-transparent hover:text-on-surface' : ''"
+                    :disabled="isOutOfStock('ramen-monolith-tonkotsu')"
                     @click="addRamenToCart('ramen-monolith-tonkotsu')"
                   >
                     <span class="material-symbols-outlined text-lg">add</span>
@@ -110,7 +127,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="group flex flex-col bg-surface-container md:col-span-4">
+          <div class="group flex flex-col bg-surface-container md:col-span-4" :class="isOutOfStock('ramen-thermal-miso') ? 'opacity-45 saturate-0' : ''">
             <div class="aspect-square w-full overflow-hidden">
               <img alt="Spicy Miso" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Overhead shot of spicy red miso ramen with chili oil droplets and green scallions in a black bowl against obsidian background" src="../assets/images/menu-thermal-miso.png">
             </div>
@@ -126,6 +143,8 @@ onBeforeUnmount(() => {
                 <button
                   class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
                   type="button"
+                  :class="isOutOfStock('ramen-thermal-miso') ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/35 hover:bg-transparent hover:text-on-surface' : ''"
+                  :disabled="isOutOfStock('ramen-thermal-miso')"
                   @click="addRamenToCart('ramen-thermal-miso')"
                 >
                   <span class="material-symbols-outlined text-lg">add</span>
@@ -134,7 +153,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="group flex flex-col bg-surface-container md:col-span-4">
+          <div class="group flex flex-col bg-surface-container md:col-span-4" :class="isOutOfStock('ramen-synthetic-clear') ? 'opacity-45 saturate-0' : ''">
             <div class="aspect-square w-full overflow-hidden">
               <img alt="Vegan Ramen" class="h-full w-full object-cover grayscale-[60%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Minimalist vegan ramen with clear kombu broth, enoki mushrooms, and tofu on a dark textured table with focused top light" src="../assets/images/menu-synthetic-clear.png">
             </div>
@@ -150,6 +169,8 @@ onBeforeUnmount(() => {
                 <button
                   class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
                   type="button"
+                  :class="isOutOfStock('ramen-synthetic-clear') ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/35 hover:bg-transparent hover:text-on-surface' : ''"
+                  :disabled="isOutOfStock('ramen-synthetic-clear')"
                   @click="addRamenToCart('ramen-synthetic-clear')"
                 >
                   <span class="material-symbols-outlined text-lg">add</span>
@@ -158,7 +179,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
 
-          <div class="group relative flex flex-col overflow-hidden bg-surface-container-low md:col-span-8 md:flex-row">
+          <div class="group relative flex flex-col overflow-hidden bg-surface-container-low md:col-span-8 md:flex-row" :class="isOutOfStock('ramen-obsidian-shoyu') ? 'opacity-45 saturate-0' : ''">
             <div class="aspect-square overflow-hidden md:w-1/2 md:aspect-auto">
               <img alt="Black Garlic Ramen" class="h-full w-full object-cover grayscale-[40%] transition-all duration-700 group-hover:scale-105 group-hover:grayscale-0" data-alt="Black garlic ramen with dark ink-like broth and vivid toppings, high contrast photography with deep shadows and sharp highlights" src="../assets/images/menu-obsidian-shoyu.png">
             </div>
@@ -176,6 +197,8 @@ onBeforeUnmount(() => {
                   <button
                     class="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/35 text-sm text-on-surface transition-colors hover:border-primary-container hover:bg-primary-container hover:text-on-primary-fixed"
                     type="button"
+                    :class="isOutOfStock('ramen-obsidian-shoyu') ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/35 hover:bg-transparent hover:text-on-surface' : ''"
+                    :disabled="isOutOfStock('ramen-obsidian-shoyu')"
                     @click="addRamenToCart('ramen-obsidian-shoyu')"
                   >
                     <span class="material-symbols-outlined text-lg">add</span>

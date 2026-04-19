@@ -95,6 +95,7 @@ watch(isCartModalOpen, async (isOpen) => {
 })
 
 onMounted(() => {
+  store.dispatch('cart/syncWithInventory')
   window.addEventListener('keydown', handleEscape)
   window.addEventListener('mousedown', handleClickOutside)
   window.addEventListener('resize', updateCartPanelPosition)

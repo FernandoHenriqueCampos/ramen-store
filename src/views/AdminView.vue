@@ -4,19 +4,20 @@ import { useStore } from 'vuex'
 import { useRouter } from 'vue-router'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } from '@/data/userMenuItems'
+import { getInventoryRecords } from '@/utils/inventory'
 
 const router = useRouter()
 const store = useStore()
 const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
 const ADMIN_ACTION_LOGS_STORAGE_KEY = 'ramen_admin_action_logs'
 
-type InventoryStatus = 'Available' | 'Depleted'
+type InventoryStatus = 'In Stock' | 'Low Stock' | 'Out of Stock'
 type ActionLogTone = 'success' | 'neutral' | 'alert'
 type ActionLogKind = 'create' | 'update' | 'delete' | 'system'
 
-type AdminInventoryItem = UserCatalogItem & {
-  status: InventoryStatus
-}
+type InventorySnapshot = Record<string, { stock: number; minStock: number }>
+
+type AdminInventoryItem = UserCatalogItem
 
 type AdminActionLog = {
   id: string
@@ -57,6 +58,11 @@ const averageFilteredPrice = computed(() => {
   return total / numericPrices.length
 })
 const averageFilteredPriceLabel = computed(() => `$${averageFilteredPrice.value.toFixed(2)}`)
+const inventoryHealthyRate = computed(() => {
+  if (menuItems.value.length === 0) return 0
+  const inStockItems = menuItems.value.filter((item) => getInventoryStatusByItemId(item.id) === 'In Stock').length
+  return Math.round((inStockItems / menuItems.value.length) * 100)
+})
 const pageSizeOptions = [5, 10, 20, 30] as const
 const itemsPerPage = ref<number>(5)
 const currentPage = ref(1)
@@ -82,6 +88,7 @@ const deletingItemName = ref('')
 const successAlertMessage = ref('')
 const isSuccessAlertVisible = ref(false)
 let successAlertTimeout: ReturnType<typeof setTimeout> | null = null
+const inventorySnapshot = ref<InventorySnapshot>({})
 const actionLogs = ref<AdminActionLog[]>([
   {
     id: 'log-seed-added',
@@ -178,10 +185,7 @@ function parseStoredActionLogs(raw: string | null): AdminActionLog[] | null {
 }
 
 function toAdminInventoryItem(item: UserCatalogItem): AdminInventoryItem {
-  return {
-    ...item,
-    status: 'Available',
-  }
+  return { ...item }
 }
 
 function formatSku(id: string): string {
@@ -198,8 +202,21 @@ function setCategoryFilter(filter: CategoryFilterOption): void {
 }
 
 function persistUserMenuItems(): void {
-  const itemsToStore: UserCatalogItem[] = menuItems.value.map(({ status: _status, ...item }) => item)
-  localStorage.setItem(USER_MENU_STORAGE_KEY, JSON.stringify(itemsToStore))
+  localStorage.setItem(USER_MENU_STORAGE_KEY, JSON.stringify(menuItems.value))
+}
+
+function refreshInventorySnapshot(): void {
+  inventorySnapshot.value = getInventoryRecords()
+}
+
+function getInventoryStatusByItemId(itemId: string): InventoryStatus {
+  const itemRecord = inventorySnapshot.value[itemId]
+  const stock = itemRecord?.stock ?? 20
+  const minStock = itemRecord?.minStock ?? 5
+
+  if (stock <= 0) return 'Out of Stock'
+  if (stock <= minStock) return 'Low Stock'
+  return 'In Stock'
 }
 
 function persistActionLogs(): void {
@@ -293,7 +310,6 @@ function addNewItem(): void {
     price: `$${price.toFixed(2)}`,
     image,
     category: newItemCategory.value,
-    status: 'Available',
   }
 
   menuItems.value = [newItem, ...menuItems.value]
@@ -418,6 +434,8 @@ function goToNextPage(): void {
 }
 
 onMounted(() => {
+  refreshInventorySnapshot()
+
   const storedItems = parseUserItems(localStorage.getItem(USER_MENU_STORAGE_KEY))
   if (storedItems) {
     menuItems.value = storedItems.map(toAdminInventoryItem)
@@ -560,8 +578,8 @@ function exitAdmin() {
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
             <p class="mb-2 text-[10px] uppercase tracking-[0.2em] text-outline">Inventory Status</p>
             <div class="flex items-end justify-between">
-              <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">98<span class="text-lg font-light opacity-50">%</span></span>
-              <span class="material-symbols-outlined text-green-500" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+              <span class="monolith-header text-3xl font-black tracking-tighter text-on-surface">{{ inventoryHealthyRate }}<span class="text-lg font-light opacity-50">%</span></span>
+              <span class="material-symbols-outlined" :class="inventoryHealthyRate >= 80 ? 'text-green-500' : inventoryHealthyRate >= 40 ? 'text-amber-400' : 'text-error'" style="font-variation-settings: 'FILL' 1;">check_circle</span>
             </div>
           </div>
           <div class="rounded-lg border border-outline-variant/5 bg-surface-container-low p-6">
@@ -637,19 +655,21 @@ function exitAdmin() {
                 <span class="text-sm font-black tracking-tighter text-primary-container">{{ item.price }}</span>
               </div>
               <div class="col-span-1 flex justify-center">
-                <div
-                  class="rounded-sm px-2 py-0.5"
-                  :class="item.status === 'Available'
-                    ? 'border border-green-500/30 bg-green-500/5'
-                    : 'border border-error/30 bg-error/5'"
-                >
-                  <p
-                    class="text-[9px] font-black uppercase tracking-tighter"
-                    :class="item.status === 'Available' ? 'text-green-500' : 'text-error'"
-                  >
-                    {{ item.status }}
-                  </p>
-                </div>
+                <template v-if="getInventoryStatusByItemId(item.id) === 'In Stock'">
+                  <div class="rounded-sm border border-green-500/40 bg-green-500/10 px-2 py-1">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-green-400">In Stock</p>
+                  </div>
+                </template>
+                <template v-else-if="getInventoryStatusByItemId(item.id) === 'Low Stock'">
+                  <div class="rounded-sm border border-amber-500/40 bg-amber-500/10 px-2 py-1">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-amber-300">Low Stock</p>
+                  </div>
+                </template>
+                <template v-else>
+                  <div class="rounded-sm border border-error/40 bg-error/10 px-2 py-1">
+                    <p class="text-[9px] font-black uppercase tracking-widest text-error">Out Of Stock</p>
+                  </div>
+                </template>
               </div>
               <div class="col-span-2 flex justify-end gap-3 opacity-30 transition-opacity group-hover:opacity-100">
                 <button class="p-2 text-outline transition-colors hover:text-white" @click="openEditModal(item)"><span class="material-symbols-outlined text-lg">edit</span></button>

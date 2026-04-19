@@ -6,6 +6,8 @@ import { useRouter } from 'vue-router'
 import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
+import { getItemStock } from '@/utils/inventory'
+import { consumeInventoryForCartItems } from '@/utils/inventory'
 
 const store = useStore()
 const router = useRouter()
@@ -40,7 +42,11 @@ function increaseItemQuantity(item: { id: string; quantity: number }) {
     return
   }
 
-  if (item.quantity >= 99) return
+  const stockLimit = getItemStock(item.id)
+  if (item.quantity >= stockLimit || item.quantity >= 99) {
+    showAlert('info', 'Stock limit reached', 'You cannot add more than available stock.')
+    return
+  }
 
   store.dispatch('cart/updateCartItemQuantity', {
     id: item.id,
@@ -91,6 +97,12 @@ function openPaymentConfirmation() {
 
 function confirmPayment() {
   isConfirmPaymentOpen.value = false
+  consumeInventoryForCartItems(
+    cartItems.value.map((item) => ({
+      id: item.id,
+      quantity: item.quantity,
+    })),
+  )
   store.dispatch('cart/clearCart')
   showAlert('success', 'Purchase completed', 'Your purchase was completed successfully.')
 }
@@ -100,6 +112,8 @@ function cancelPaymentConfirmation() {
 }
 
 onMounted(() => {
+  store.dispatch('cart/syncWithInventory')
+
   cartItems.value.forEach((item) => {
     if (isLimitedReleaseItem(item.id) && item.quantity > 1) {
       store.dispatch('cart/updateCartItemQuantity', {
@@ -189,8 +203,10 @@ onBeforeUnmount(() => {
                   <span class="min-w-8 text-center font-headline text-base font-black text-zinc-100">{{ item.quantity }}</span>
                   <button
                     class="h-8 w-8 rounded-full border border-white/20 text-sm font-bold text-zinc-200 transition-colors hover:border-white hover:text-white"
-                    :class="isLimitedReleaseItem(item.id) ? 'cursor-not-allowed border-white/10 text-zinc-500 hover:border-white/10 hover:text-zinc-500' : ''"
-                    :disabled="isLimitedReleaseItem(item.id)"
+                    :class="isLimitedReleaseItem(item.id) || item.quantity >= getItemStock(item.id)
+                      ? 'cursor-not-allowed border-white/10 text-zinc-500 hover:border-white/10 hover:text-zinc-500'
+                      : ''"
+                    :disabled="isLimitedReleaseItem(item.id) || item.quantity >= getItemStock(item.id)"
                     @click="increaseItemQuantity(item)"
                   >
                     +

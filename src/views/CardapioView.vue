@@ -7,6 +7,7 @@ import AppToastAlerts from '@/components/AppToastAlerts.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
+import { getItemStock } from '@/utils/inventory'
 
 const USER_MENU_STORAGE_KEY = 'ramen_user_menu_items'
 const categories: Array<CatalogCategory | 'All'> = ['All', 'Ramen', 'Drinks', 'Sides']
@@ -30,6 +31,7 @@ type UiAlert = {
 const alerts = ref<UiAlert[]>([])
 let alertId = 0
 const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
+const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; quantity: number }>)
 
 const puzzlePattern = [
   'md:col-span-6 lg:col-span-4',
@@ -81,7 +83,8 @@ function formatMoney(value: number): string {
 
 function openItemModal(item: UserCatalogItem): void {
   selectedItem.value = item
-  selectedQuantity.value = 1
+  const remainingStock = getRemainingStock(item.id)
+  selectedQuantity.value = remainingStock > 0 ? 1 : 0
 }
 
 function closeItemModal(): void {
@@ -94,7 +97,10 @@ function decreaseQuantity(): void {
 }
 
 function increaseQuantity(): void {
-  selectedQuantity.value = Math.min(99, selectedQuantity.value + 1)
+  if (!selectedItem.value) return
+  const maxAllowed = getRemainingStock(selectedItem.value.id)
+  if (maxAllowed <= 0) return
+  selectedQuantity.value = Math.min(maxAllowed, selectedQuantity.value + 1)
 }
 
 function showAlert(type: AlertType, title: string, message: string): void {
@@ -113,14 +119,20 @@ function showAlert(type: AlertType, title: string, message: string): void {
   alertTimeouts.set(id, timeout)
 }
 
-function addToCart(): void {
+async function addToCart(): Promise<void> {
   if (!selectedItem.value) {
     showAlert('error', 'Unable to add', 'Select a valid item to continue.')
     return
   }
 
+  const remainingStock = getRemainingStock(selectedItem.value.id)
+  if (remainingStock <= 0) {
+    showAlert('error', 'Out of stock', `${selectedItem.value.name} is currently out of stock.`)
+    return
+  }
+
   try {
-    store.dispatch('cart/addItemToCart', {
+    const didAdd = (await store.dispatch('cart/addItemToCart', {
       item: {
         id: selectedItem.value.id,
         name: selectedItem.value.name,
@@ -128,13 +140,30 @@ function addToCart(): void {
         category: selectedItem.value.category,
         image: selectedItem.value.image,
       },
-      quantity: selectedQuantity.value,
-    })
+      quantity: Math.min(selectedQuantity.value, remainingStock),
+    })) as boolean
 
-    showAlert('success', 'Added to cart', `${selectedQuantity.value} item(s) of ${selectedItem.value.name}.`)
+    if (!didAdd) {
+      showAlert('error', 'Out of stock', `${selectedItem.value.name} is currently out of stock.`)
+      return
+    }
+
+    showAlert('success', 'Added to cart', `${Math.min(selectedQuantity.value, remainingStock)} item(s) of ${selectedItem.value.name}.`)
   } catch {
     showAlert('error', 'Unable to add', 'We could not update your cart right now.')
   }
+}
+
+function getCartQuantity(itemId: string): number {
+  return cartItems.value.find((item) => item.id === itemId)?.quantity ?? 0
+}
+
+function getRemainingStock(itemId: string): number {
+  return Math.max(0, getItemStock(itemId) - getCartQuantity(itemId))
+}
+
+function isItemOutOfStock(item: UserCatalogItem): boolean {
+  return getItemStock(item.id) <= 0
 }
 
 function handleEscape(event: KeyboardEvent): void {
@@ -208,9 +237,15 @@ function cardClass(index: number): string {
   return puzzlePattern[index % puzzlePattern.length] ?? puzzlePattern[0]!
 }
 
+const selectedItemRemainingStock = computed(() => {
+  if (!selectedItem.value) return 0
+  return getRemainingStock(selectedItem.value.id)
+})
+
 const itemSubtotal = computed(() => {
   if (!selectedItem.value) return '$0.00'
-  return formatMoney(parsePriceToNumber(selectedItem.value.price) * selectedQuantity.value)
+  if (selectedItemRemainingStock.value <= 0) return '$0.00'
+  return formatMoney(parsePriceToNumber(selectedItem.value.price) * Math.min(selectedQuantity.value, selectedItemRemainingStock.value))
 })
 </script>
 
@@ -264,7 +299,7 @@ const itemSubtotal = computed(() => {
           v-for="(item, index) in filteredItems"
           :key="item.id"
           class="group overflow-hidden rounded-2xl border border-outline-variant/15 bg-surface-container-low shadow-[0_10px_40px_rgba(0,0,0,0.22)]"
-          :class="cardClass(index)"
+          :class="[cardClass(index), isItemOutOfStock(item) ? 'opacity-45 saturate-0' : '']"
         >
           <div class="h-56 overflow-hidden md:h-64 lg:h-72">
             <img
@@ -347,6 +382,8 @@ const itemSubtotal = computed(() => {
               <div class="flex items-center gap-2">
                 <button
                   class="h-9 w-9 rounded-full border border-outline-variant/30 text-sm font-bold text-on-surface transition-colors hover:border-primary-container"
+                  :class="selectedItemRemainingStock <= 0 ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/30' : ''"
+                  :disabled="selectedItemRemainingStock <= 0"
                   @click="decreaseQuantity"
                 >
                   -
@@ -354,6 +391,8 @@ const itemSubtotal = computed(() => {
                 <span class="min-w-8 text-center font-headline text-lg font-black">{{ selectedQuantity }}</span>
                 <button
                   class="h-9 w-9 rounded-full border border-outline-variant/30 text-sm font-bold text-on-surface transition-colors hover:border-primary-container"
+                  :class="selectedItemRemainingStock <= 0 ? 'cursor-not-allowed opacity-40 hover:border-outline-variant/30' : ''"
+                  :disabled="selectedItemRemainingStock <= 0"
                   @click="increaseQuantity"
                 >
                   +
@@ -367,11 +406,17 @@ const itemSubtotal = computed(() => {
             <p class="font-headline text-2xl font-black text-primary-container">{{ itemSubtotal }}</p>
           </div>
 
+          <p class="text-[11px] uppercase tracking-widest text-outline">
+            Stock available: {{ selectedItemRemainingStock }}
+          </p>
+
           <button
             class="rounded-full border border-primary-container/40 bg-gradient-to-r from-primary to-primary-container px-7 py-3.5 text-xs font-black uppercase tracking-[0.22em] text-on-primary-fixed shadow-[0_10px_30px_rgba(255,255,255,0.26)] transition-all hover:scale-[1.02] hover:shadow-[0_14px_36px_rgba(255,255,255,0.38)]"
+            :class="selectedItemRemainingStock <= 0 ? 'cursor-not-allowed opacity-40 hover:scale-100 hover:shadow-none' : ''"
+            :disabled="selectedItemRemainingStock <= 0"
             @click="addToCart"
           >
-            Add to cart
+            {{ selectedItemRemainingStock <= 0 ? 'Out of stock' : 'Add to cart' }}
           </button>
         </div>
       </div>

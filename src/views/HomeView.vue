@@ -9,6 +9,7 @@ import nebulaImage from '@/assets/images/home-spec-nebula.png'
 import cinematicBowlVideo from '@/assets/videos/cinematic-bowl-of-ramen.mp4'
 import { defaultUserCatalogItems, type UserCatalogItem } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
+import { getItemStock } from '@/utils/inventory'
 
 const heroSection = ref<HTMLElement | null>(null)
 const heroOffsetY = ref(0)
@@ -111,6 +112,16 @@ const isLimitedReleaseInCart = computed(() => {
   return cartItems.value.some((item) => item.id === limitedReleaseCartId.value)
 })
 
+function getCartQuantity(itemId: string): number {
+  return cartItems.value.find((item) => item.id === itemId)?.quantity ?? 0
+}
+
+const nebulaRemainingStock = computed(() => Math.max(0, getItemStock('spec-nebula') - getCartQuantity('spec-nebula')))
+const limitedReleaseRemainingStock = computed(() => {
+  if (!limitedReleaseCartId.value) return 0
+  return Math.max(0, getItemStock(limitedReleaseCartId.value) - getCartQuantity(limitedReleaseCartId.value))
+})
+
 const limitedReleaseCountdownLabel = computed(() => {
   const minutes = Math.floor(limitedReleaseSecondsLeft.value / 60)
   const seconds = limitedReleaseSecondsLeft.value % 60
@@ -185,8 +196,13 @@ watch(activeStoryStageIndex, (next, previous) => {
   storyTransitionName.value = next > previous ? 'story-forward' : 'story-backward'
 })
 
-const addNebulaToCart = () => {
-  store.dispatch('cart/addItemToCart', {
+const addNebulaToCart = async () => {
+  if (nebulaRemainingStock.value <= 0) {
+    showAlert('error', 'Out of stock', 'THE NEBULA is currently unavailable.')
+    return
+  }
+
+  const didAdd = (await store.dispatch('cart/addItemToCart', {
     item: {
       id: 'spec-nebula',
       name: 'THE NEBULA',
@@ -195,7 +211,12 @@ const addNebulaToCart = () => {
       image: nebulaImage,
     },
     quantity: 1,
-  })
+  })) as boolean
+
+  if (!didAdd) {
+    showAlert('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
+    return
+  }
 
   showAlert('success', 'Added to cart', 'THE NEBULA has been added to your cart.')
 }
@@ -270,7 +291,7 @@ function goToCardapioItem(itemId: string): void {
   })
 }
 
-function addLimitedReleaseToCart() {
+async function addLimitedReleaseToCart() {
   if (!limitedReleaseItem.value) return
 
   if (isLimitedReleaseInCart.value) {
@@ -278,16 +299,26 @@ function addLimitedReleaseToCart() {
     return
   }
 
-  store.dispatch('cart/addItemToCart', {
+  if (limitedReleaseRemainingStock.value <= 0) {
+    showAlert('error', 'Out of stock', 'This limited release is currently unavailable.')
+    return
+  }
+
+  const didAdd = (await store.dispatch('cart/addItemToCart', {
     item: {
       id: limitedReleaseCartId.value,
-      name: `${limitedReleaseItem.value.name} â€¢ Limited Release`,
+      name: `${limitedReleaseItem.value.name} • Limited Release`,
       price: formatMoney(limitedReleaseDiscountedPrice.value),
       category: limitedReleaseItem.value.category,
       image: limitedReleaseItem.value.image,
     },
     quantity: 1,
-  })
+  })) as boolean
+
+  if (!didAdd) {
+    showAlert('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
+    return
+  }
 
   showAlert('success', 'Limited release added', `${limitedReleaseItem.value.name} with 10% OFF is in your cart.`)
 }
@@ -388,7 +419,7 @@ onBeforeUnmount(() => {
             <RouterLink class="border-b border-outline-variant/40 pb-1 text-xs font-bold uppercase tracking-widest transition-colors hover:text-primary-container" to="/cardapio">View All Specs</RouterLink>
           </div>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-            <div class="group relative flex min-h-[500px] flex-col justify-between overflow-hidden rounded-lg bg-surface-container p-8 md:col-span-2 md:row-span-2">
+            <div class="group relative flex min-h-[500px] flex-col justify-between overflow-hidden rounded-lg bg-surface-container p-8 md:col-span-2 md:row-span-2" :class="nebulaRemainingStock <= 0 ? 'opacity-45 saturate-0' : ''">
               <img class="absolute inset-0 h-full w-full object-cover opacity-40 transition-transform duration-500 group-hover:scale-105" data-alt="dramatic lighting on a black bowl of spicy tonkotsu ramen with vibrant red chili oil swirls and green scallions" src="../assets/images/home-spec-nebula.png">
               <div class="relative z-10 flex h-full flex-col justify-between">
                 <div>
@@ -399,12 +430,14 @@ onBeforeUnmount(() => {
                   <p class="font-body text-sm text-on-surface/80">Black garlic infused tonkotsu, 48-hour cured chashu, smoked wood ear mushrooms.</p>
                   <div class="flex items-center justify-between">
                     <span class="font-headline text-lg font-bold text-primary-container">$24.00</span>
-                    <button
-                      class="flex h-11 w-11 items-center justify-center rounded-full border border-outline-variant/40 transition-colors hover:bg-primary-container hover:text-on-primary-fixed"
-                      @click="addNebulaToCart"
-                    >
-                      <span class="material-symbols-outlined text-lg">add</span>
-                    </button>
+                  <button
+                    class="flex h-11 w-11 items-center justify-center rounded-full border border-outline-variant/40 transition-colors hover:bg-primary-container hover:text-on-primary-fixed"
+                    :class="nebulaRemainingStock <= 0 ? 'cursor-not-allowed opacity-40 hover:bg-transparent hover:text-current' : ''"
+                    :disabled="nebulaRemainingStock <= 0"
+                    @click="addNebulaToCart"
+                  >
+                    <span class="material-symbols-outlined text-lg">add</span>
+                  </button>
                   </div>
                 </div>
               </div>
@@ -450,7 +483,7 @@ onBeforeUnmount(() => {
               </div>
             </div>
 
-            <div class="flex items-center gap-8 rounded-lg border border-primary-container/25 bg-gradient-to-br from-surface-container-high to-surface-container-highest p-8 md:col-span-2">
+            <div class="flex items-center gap-8 rounded-lg border border-primary-container/25 bg-gradient-to-br from-surface-container-high to-surface-container-highest p-8 md:col-span-2" :class="limitedReleaseRemainingStock <= 0 ? 'opacity-45 saturate-0' : ''">
               <div class="space-y-4">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="rounded-full border border-primary-container/45 bg-primary-container/20 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-container">
@@ -478,11 +511,13 @@ onBeforeUnmount(() => {
                   class="rounded-DEFAULT px-4 py-2 text-[10px] font-bold uppercase tracking-widest transition-colors"
                   :class="isLimitedReleaseInCart
                     ? 'cursor-not-allowed bg-outline-variant/35 text-on-surface-variant'
-                    : 'bg-on-surface text-surface-container-lowest hover:bg-primary-container'"
-                  :disabled="isLimitedReleaseInCart"
+                    : limitedReleaseRemainingStock <= 0
+                      ? 'cursor-not-allowed bg-outline-variant/35 text-on-surface-variant'
+                      : 'bg-on-surface text-surface-container-lowest hover:bg-primary-container'"
+                  :disabled="isLimitedReleaseInCart || limitedReleaseRemainingStock <= 0"
                   @click="addLimitedReleaseToCart"
                 >
-                  {{ isLimitedReleaseInCart ? 'Limit Reached (1/1)' : 'Add Limited Release' }}
+                  {{ isLimitedReleaseInCart ? 'Limit Reached (1/1)' : limitedReleaseRemainingStock <= 0 ? 'Out Of Stock' : 'Add Limited Release' }}
                 </button>
               </div>
               <div class="flex h-32 w-32 flex-shrink-0 items-center justify-center overflow-hidden rounded-full border border-primary-container/30 bg-surface-container-lowest">
@@ -558,3 +593,4 @@ onBeforeUnmount(() => {
   transform: translateX(115%);
 }
 </style>
+
