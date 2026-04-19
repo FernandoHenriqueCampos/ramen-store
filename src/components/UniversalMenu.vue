@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -10,6 +10,7 @@ const isAuthed = computed(() => store.getters['adminAuth/isAuthenticated'] as bo
 const isCartModalOpen = ref(false)
 const cartButtonRef = ref<HTMLElement | null>(null)
 const cartPanelRef = ref<HTMLElement | null>(null)
+const cartPanelStyle = ref<Record<string, string>>({})
 const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; name: string; price: string; quantity: number }>)
 const cartTotalItems = computed(() => store.getters['cart/totalItems'] as number)
 const cartTotalAmount = computed(() => store.getters['cart/totalAmount'] as number)
@@ -60,6 +61,26 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
+function updateCartPanelPosition() {
+  const button = cartButtonRef.value
+  if (!button) return
+
+  const buttonRect = button.getBoundingClientRect()
+  const viewportWidth = window.innerWidth
+  const panelWidth = Math.min(460, Math.floor(viewportWidth * 0.94))
+  const horizontalPadding = viewportWidth >= 768 ? 32 : 16
+  const left = Math.min(
+    viewportWidth - panelWidth - horizontalPadding,
+    Math.max(horizontalPadding, Math.round(buttonRect.right - panelWidth)),
+  )
+
+  cartPanelStyle.value = {
+    top: `${Math.round(buttonRect.bottom + 10)}px`,
+    left: `${left}px`,
+    width: `${panelWidth}px`,
+  }
+}
+
 watch(
   () => route.path,
   () => {
@@ -67,14 +88,22 @@ watch(
   },
 )
 
+watch(isCartModalOpen, async (isOpen) => {
+  if (!isOpen) return
+  await nextTick()
+  updateCartPanelPosition()
+})
+
 onMounted(() => {
   window.addEventListener('keydown', handleEscape)
   window.addEventListener('mousedown', handleClickOutside)
+  window.addEventListener('resize', updateCartPanelPosition)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleEscape)
   window.removeEventListener('mousedown', handleClickOutside)
+  window.removeEventListener('resize', updateCartPanelPosition)
 })
 </script>
 
@@ -162,7 +191,8 @@ onBeforeUnmount(() => {
     <aside
       v-if="isCartModalOpen"
       ref="cartPanelRef"
-      class="fixed right-4 top-20 z-[75] w-[min(94vw,460px)] rounded-2xl border border-white/15 bg-[#111111] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)] md:right-8"
+      class="fixed z-[75] rounded-2xl border border-white/15 bg-[#111111] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+      :style="cartPanelStyle"
     >
       <div class="mb-4 flex items-center justify-between border-b border-white/10 pb-3">
         <div>
