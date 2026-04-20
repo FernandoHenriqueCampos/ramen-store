@@ -7,6 +7,7 @@ import LoginView from '@/views/LoginView.vue'
 import AdminView from '@/views/AdminView.vue'
 import CheckoutView from '@/views/CheckoutView.vue'
 import InventoryView from '@/views/InventoryView.vue'
+import SalesDashboardView from '@/views/SalesDashboardView.vue'
 import store from '@/store'
 
 const router = createRouter({
@@ -19,6 +20,7 @@ const router = createRouter({
     { path: '/login', name: 'login', component: LoginView },
     { path: '/admin', name: 'admin', component: AdminView },
     { path: '/admin/stock', name: 'admin-stock', component: InventoryView },
+    { path: '/admin/sales', name: 'admin-sales', component: SalesDashboardView },
   ],
   scrollBehavior() {
     return { top: 0 }

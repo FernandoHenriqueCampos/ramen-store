@@ -8,6 +8,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import UniversalMenu from '@/components/UniversalMenu.vue'
 import { getItemStock } from '@/utils/inventory'
 import { consumeInventoryForCartItems } from '@/utils/inventory'
+import { appendSaleOrder } from '@/utils/sales'
 
 const store = useStore()
 const router = useRouter()
@@ -16,7 +17,7 @@ const alerts = ref<UiAlert[]>([])
 let alertId = 0
 const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
 
-const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; name: string; price: string; quantity: number }>)
+const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; name: string; price: string; quantity: number; category: 'Ramen' | 'Drinks' | 'Sides' }>)
 const cartTotalItems = computed(() => store.getters['cart/totalItems'] as number)
 const cartTotalAmount = computed(() => store.getters['cart/totalAmount'] as number)
 const estimatedTax = computed(() => Number((cartTotalAmount.value * 0.08).toFixed(2)))
@@ -96,7 +97,25 @@ function openPaymentConfirmation() {
 }
 
 function confirmPayment() {
+  const purchasedItems = cartItems.value.map((item) => ({
+    id: item.id,
+    name: item.name,
+    quantity: item.quantity,
+    unitPrice: parsePriceToNumber(item.price),
+    category: item.category,
+  }))
+
+  if (!purchasedItems.length) {
+    isConfirmPaymentOpen.value = false
+    return
+  }
+
   isConfirmPaymentOpen.value = false
+  appendSaleOrder({
+    items: purchasedItems,
+    total: orderTotal.value,
+    channel: 'App',
+  })
   consumeInventoryForCartItems(
     cartItems.value.map((item) => ({
       id: item.id,

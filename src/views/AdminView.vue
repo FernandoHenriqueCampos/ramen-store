@@ -479,19 +479,14 @@ function exitAdmin() {
         <p class="mt-2 text-[10px] font-medium uppercase tracking-[0.2em] text-outline">Core Control System</p>
       </div>
       <nav class="mt-4 flex-1 space-y-2 px-4">
-        <a class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" href="#">
+        <router-link class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" to="/admin/sales">
           <span class="material-symbols-outlined text-[20px]">dashboard</span>
           <span class="font-label text-sm font-medium tracking-tight">Dashboard</span>
-        </a>
+        </router-link>
         <router-link class="group flex items-center gap-3 rounded border-r-2 border-primary-container bg-surface-container-high px-4 py-3 text-primary-container" to="/admin">
           <span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">restaurant_menu</span>
           <span class="font-label text-sm font-bold tracking-tight">Menu Items</span>
         </router-link>
-        <a class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" href="#">
-          <span class="material-symbols-outlined text-[20px]">receipt_long</span>
-          <span class="font-label text-sm font-medium tracking-tight">Orders</span>
-          <span class="ml-auto rounded bg-primary-container/10 px-1.5 py-0.5 text-[10px] font-bold text-primary-container">12</span>
-        </a>
         <router-link class="group flex items-center gap-3 rounded px-4 py-3 text-on-surface/60 transition-all duration-300 hover:bg-surface-container-low hover:text-primary-container" to="/admin/stock">
           <span class="material-symbols-outlined text-[20px]">inventory_2</span>
           <span class="font-label text-sm font-medium tracking-tight">Stock</span>
