@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 
 import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
-import UniversalMenu from '@/components/UniversalMenu.vue'
 import { getItemStock } from '@/utils/inventory'
 import { consumeInventoryForCartItems } from '@/utils/inventory'
 import { appendSaleOrder } from '@/utils/sales'
@@ -151,7 +150,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-[#101010] text-zinc-100">
-    <UniversalMenu />
 
     <main class="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-16 pt-32 md:px-10">
       <header class="space-y-3">

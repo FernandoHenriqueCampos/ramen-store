@@ -3,7 +3,6 @@ import { onBeforeUnmount, ref } from 'vue'
 import { useStore } from 'vuex'
 
 import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
-import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
 import { getItemStock } from '@/utils/inventory'
@@ -76,7 +75,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="bg-[#131313] font-body text-on-surface selection:bg-primary-container selection:text-on-primary-fixed">
-    <UniversalMenu />
 
     <main class="mx-auto max-w-7xl px-6 pb-24 pt-32 md:px-12">
       <header class="mb-20 space-y-4">

@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 import { useStore } from 'vuex'
 
 import AppToastAlerts from '@/components/AppToastAlerts.vue'
-import UniversalMenu from '@/components/UniversalMenu.vue'
 import { defaultUserCatalogItems, type CatalogCategory, type UserCatalogItem } from '@/data/userMenuItems'
 import type { RootState } from '@/store'
 import { getItemStock } from '@/utils/inventory'
@@ -251,7 +250,6 @@ const itemSubtotal = computed(() => {
 
 <template>
   <div class="min-h-screen bg-background text-on-surface selection:bg-primary-container selection:text-on-primary-fixed">
-    <UniversalMenu />
 
     <main class="mx-auto flex w-full max-w-7xl flex-col gap-12 px-6 pb-20 pt-32 md:px-10">
       <header class="space-y-5">

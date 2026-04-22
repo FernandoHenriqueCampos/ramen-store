@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { formatMoney } from '@/utils/format'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
@@ -14,10 +15,6 @@ const cartPanelStyle = ref<Record<string, string>>({})
 const cartItems = computed(() => store.getters['cart/items'] as Array<{ id: string; name: string; price: string; quantity: number }>)
 const cartTotalItems = computed(() => store.getters['cart/totalItems'] as number)
 const cartTotalAmount = computed(() => store.getters['cart/totalAmount'] as number)
-
-function formatMoney(value: number): string {
-  return `$${value.toFixed(2)}`
-}
 
 function exitAdmin() {
   store.dispatch('adminAuth/logout')

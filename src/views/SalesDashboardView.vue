@@ -2,7 +2,6 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
-import UniversalMenu from '@/components/UniversalMenu.vue'
 
 type SoldItem = {
   id: string
@@ -197,7 +196,6 @@ function handleStorageChange(event: StorageEvent): void {
 
 <template>
   <div class="bg-background">
-    <UniversalMenu />
     <div class="flex min-h-screen overflow-hidden bg-background pt-20">
       <aside class="fixed left-0 top-20 z-50 flex h-[calc(100vh-5rem)] w-64 flex-col border-r border-outline-variant/10 bg-surface-container-lowest">
         <div class="p-8">

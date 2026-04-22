@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useStore } from 'vuex'
 
-import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
-import UniversalMenu from '@/components/UniversalMenu.vue'
+import { formatMoney } from '@/utils/format'
 import nebulaImage from '@/assets/images/home-spec-nebula.png'
 import cinematicBowlVideo from '@/assets/videos/cinematic-bowl-of-ramen.mp4'
 import { defaultUserCatalogItems, type UserCatalogItem } from '@/data/userMenuItems'
@@ -20,9 +19,8 @@ const scrollVideoTravelDistance = ref(1)
 const scrollVideoProgress = ref(0)
 const store = useStore<RootState>()
 const router = useRouter()
-const alerts = ref<UiAlert[]>([])
-let alertId = 0
-const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
+type NotifyFn = (type: 'success' | 'error' | 'info', title: string, message: string) => void
+const notify = inject<NotifyFn>('notify', () => {})
 const RELEASE_WINDOW_SECONDS = 180
 const limitedReleaseItem = ref<UserCatalogItem | null>(null)
 const limitedReleaseSecondsLeft = ref(RELEASE_WINDOW_SECONDS)
@@ -198,7 +196,7 @@ watch(activeStoryStageIndex, (next, previous) => {
 
 const addNebulaToCart = async () => {
   if (nebulaRemainingStock.value <= 0) {
-    showAlert('error', 'Out of stock', 'THE NEBULA is currently unavailable.')
+    notify('error', 'Out of stock', 'THE NEBULA is currently unavailable.')
     return
   }
 
@@ -214,21 +212,17 @@ const addNebulaToCart = async () => {
   })) as boolean
 
   if (!didAdd) {
-    showAlert('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
+    notify('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
     return
   }
 
-  showAlert('success', 'Added to cart', 'THE NEBULA has been added to your cart.')
+  notify('success', 'Added to cart', 'THE NEBULA has been added to your cart.')
 }
 
 function parsePriceToNumber(price: string): number {
   const normalized = price.replace(/[^0-9.]/g, '')
   const parsed = Number.parseFloat(normalized)
   return Number.isFinite(parsed) ? parsed : 0
-}
-
-function formatMoney(value: number): string {
-  return `$${value.toFixed(2)}`
 }
 
 function pickRandomLimitedReleaseItem(): UserCatalogItem {
@@ -268,22 +262,6 @@ function stopLimitedReleaseTimer() {
   limitedReleaseTimer = null
 }
 
-function showAlert(type: AlertType, title: string, message: string): void {
-  const id = ++alertId
-  alerts.value.push({
-    id,
-    type,
-    title,
-    message,
-  })
-
-  const timeout = setTimeout(() => {
-    alerts.value = alerts.value.filter((alert) => alert.id !== id)
-    alertTimeouts.delete(id)
-  }, 2800)
-  alertTimeouts.set(id, timeout)
-}
-
 function goToCardapioItem(itemId: string): void {
   router.push({
     path: '/cardapio',
@@ -295,19 +273,19 @@ async function addLimitedReleaseToCart() {
   if (!limitedReleaseItem.value) return
 
   if (isLimitedReleaseInCart.value) {
-    showAlert('info', 'Limit reached', 'You can only buy 1 unit of this limited release.')
+    notify('info', 'Limit reached', 'You can only buy 1 unit of this limited release.')
     return
   }
 
   if (limitedReleaseRemainingStock.value <= 0) {
-    showAlert('error', 'Out of stock', 'This limited release is currently unavailable.')
+    notify('error', 'Out of stock', 'This limited release is currently unavailable.')
     return
   }
 
   const didAdd = (await store.dispatch('cart/addItemToCart', {
     item: {
       id: limitedReleaseCartId.value,
-      name: `${limitedReleaseItem.value.name} • Limited Release`,
+      name: `${limitedReleaseItem.value.name} - Limited Release`,
       price: formatMoney(limitedReleaseDiscountedPrice.value),
       category: limitedReleaseItem.value.category,
       image: limitedReleaseItem.value.image,
@@ -316,11 +294,11 @@ async function addLimitedReleaseToCart() {
   })) as boolean
 
   if (!didAdd) {
-    showAlert('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
+    notify('info', 'Stock limit reached', 'You already reached the available stock in your cart.')
     return
   }
 
-  showAlert('success', 'Limited release added', `${limitedReleaseItem.value.name} with 10% OFF is in your cart.`)
+  notify('success', 'Limited release added', `${limitedReleaseItem.value.name} with 10% OFF is in your cart.`)
 }
 
 onMounted(() => {
@@ -341,15 +319,11 @@ onBeforeUnmount(() => {
     scrollSyncFrame = null
   }
   stopLimitedReleaseTimer()
-  alertTimeouts.forEach((timeout) => clearTimeout(timeout))
-  alertTimeouts.clear()
 })
 </script>
 
 <template>
   <div class="bg-background text-on-surface font-body selection:bg-primary-container selection:text-on-primary-fixed">
-    <UniversalMenu />
-
     <main>
       <section ref="heroSection" class="relative flex h-screen flex-col items-center justify-center overflow-hidden">
         <div class="absolute inset-0 z-0">
@@ -535,21 +509,6 @@ onBeforeUnmount(() => {
       </section>
     </main>
 
-    <AppToastAlerts :alerts="alerts" />
-
-    <footer class="w-full border-t border-[#5d4038]/20 bg-[#0e0e0e]">
-      <div class="mx-auto flex w-full max-w-7xl flex-col items-center justify-between gap-8 px-12 py-16 md:flex-row">
-        <div class="flex flex-col gap-4">
-          <div class="font-headline text-lg font-bold text-[#e5e2e1]">RAMEN MONOLITH</div>
-          <div class="font-['Inter'] text-xs uppercase tracking-[0.1em] text-[#ff5625]">&copy; 2024 RAMEN MONOLITH. PRECISION CRAFTED.</div>
-        </div>
-        <div class="flex gap-8">
-          <a class="font-['Inter'] text-xs uppercase tracking-[0.1em] text-[#e5e2e1]/60 transition-all duration-300 ease-in-out hover:text-[#ff5625]" href="#">Location</a>
-          <a class="font-['Inter'] text-xs uppercase tracking-[0.1em] text-[#e5e2e1]/60 transition-all duration-300 ease-in-out hover:text-[#ff5625]" href="#">Instagram</a>
-          <a class="font-['Inter'] text-xs uppercase tracking-[0.1em] text-[#e5e2e1]/60 transition-all duration-300 ease-in-out hover:text-[#ff5625]" href="#">Hours</a>
-        </div>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -593,4 +552,3 @@ onBeforeUnmount(() => {
   transform: translateX(115%);
 }
 </style>
-

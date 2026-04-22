@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref } from 'vue'
+import { ref, inject } from 'vue'
 import { useStore } from 'vuex'
 import { useRoute, useRouter } from 'vue-router'
-import AppToastAlerts, { type AlertType, type UiAlert } from '@/components/AppToastAlerts.vue'
-import UniversalMenu from '@/components/UniversalMenu.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,28 +10,12 @@ const username = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const errorMessage = ref('')
-const alerts = ref<UiAlert[]>([])
-let alertId = 0
-const alertTimeouts = new Map<number, ReturnType<typeof setTimeout>>()
 
-function showAlert(type: AlertType, title: string, message: string): void {
-  const id = ++alertId
-  alerts.value.push({
-    id,
-    type,
-    title,
-    message,
-  })
-
-  const timeout = setTimeout(() => {
-    alerts.value = alerts.value.filter((alert) => alert.id !== id)
-    alertTimeouts.delete(id)
-  }, 3200)
-  alertTimeouts.set(id, timeout)
-}
+type NotifyFn = (type: 'success' | 'error' | 'info', title: string, message: string) => void
+const notify = inject<NotifyFn>('notify', () => {})
 
 function handleApplyClick(): void {
-  showAlert(
+  notify(
     'info',
     'Recruitment Closed',
     'This site has only 1 account: admin/admin. Our HR team is currently just a noodle.'
@@ -41,7 +23,7 @@ function handleApplyClick(): void {
 }
 
 function handleBiometricClick(): void {
-  showAlert(
+  notify(
     'info',
     'Biometric Offline',
     'Biometric login is unavailable. The budget was fully invested in noodles and dramatic lighting.'
@@ -63,16 +45,10 @@ async function enterAdmin() {
   const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/admin'
   router.push(redirect)
 }
-
-onBeforeUnmount(() => {
-  alertTimeouts.forEach((timeout) => clearTimeout(timeout))
-  alertTimeouts.clear()
-})
 </script>
 
 <template>
   <div class="login-page">
-    <UniversalMenu />
     <section class="login-screen">
       <div class="login-visual" aria-hidden="true"></div>
       <span class="status-dot" aria-hidden="true"></span>
@@ -132,7 +108,6 @@ onBeforeUnmount(() => {
         <p class="signup-line">New member? <a href="#" @click.prevent="handleApplyClick">Apply</a></p>
       </div>
     </section>
-    <AppToastAlerts :alerts="alerts" />
   </div>
 </template>
 
